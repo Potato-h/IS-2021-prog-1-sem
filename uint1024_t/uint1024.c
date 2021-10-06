@@ -119,11 +119,11 @@ void printf_value(uint1024_t x) {
     char str[1000];
     size_t i = 0;
 
-    while (memcmp(x.chunk, zero.chunk, len * sizeof(uint32_t)) != 0) {
+    do {
         struct div_res res = div_op(x, 10);
         x = res.quot;
         str[i++] = res.rest + '0';
-    }
+    } while (memcmp(x.chunk, zero.chunk, len * sizeof(uint32_t)) != 0);
 
     str[i] = '\0';
 
