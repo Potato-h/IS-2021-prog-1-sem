@@ -151,18 +151,3 @@ void scanf_value(uint1024_t* x) {
         *x = add_op(*x, from_uint(buf[i] - '0'));
     }
 }
-
-int main() {
-    uint1024_t x, y;
-    scanf_value(&x);
-    scanf_value(&y);
-    
-    uint1024_t res = mult_op(x, y);
-    res = subtr_op(res, y);
-    res = mult_op(res, x);
-    
-    printf_value(res);
-    printf("\n");
-
-    return 0;
-}
