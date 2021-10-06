@@ -113,10 +113,10 @@ static struct div_res div_op(uint1024_t x, uint32_t y) {
     return (struct div_res){ .quot = quot, .rest = acc };
 }
 
-void printf_value(uint1024_t x) {
+char* itos(uint1024_t x) {
     const size_t len = sizeof(x.chunk) / sizeof(uint32_t);
     uint1024_t zero = from_uint(0);
-    char str[1000];
+    char* str = (char*)malloc(400 * sizeof(char));
     size_t i = 0;
 
     do {
@@ -133,21 +133,37 @@ void printf_value(uint1024_t x) {
         str[i - j - 1] = tmp;
     }
 
+    return str;
+}
+
+void printf_value(uint1024_t x) {
+    char* str = itos(x);
     printf("%s", str);
+    free(str);
+}
+
+uint1024_t stoi(const char* str) {
+    if (!str) {
+        return from_uint(0);
+    }    
+
+    uint1024_t x = from_uint(0);
+    size_t len = strlen(str);
+
+    for (size_t i = 0; i < len; i++) {
+        x = mult_op(x, from_uint(10));
+        x = add_op(x, from_uint(str[i] - '0'));
+    }
+
+    return x;
 }
 
 void scanf_value(uint1024_t* x) {
     if (!x) {
         return;
-    }    
-
-    *x = from_uint(0);
-    char buf[400];
-    scanf("%s", buf);
-    size_t len = strlen(buf);
-
-    for (size_t i = 0; i < len; i++) {
-        *x = mult_op(*x, from_uint(10));
-        *x = add_op(*x, from_uint(buf[i] - '0'));
     }
+
+    char str[400];
+    scanf("%s", str);
+    *x = stoi(str);
 }
