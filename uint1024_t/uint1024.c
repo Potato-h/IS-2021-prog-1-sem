@@ -1,5 +1,3 @@
-// TODO: Resolve mutability issues
-
 #include "uint1024.h"
 #include <memory.h>
 #include <stdio.h>
@@ -46,7 +44,6 @@ static void get_radix(uint1024_t* x, size_t radix) {
     }
 }
 
-// TODO: rewrite to additional code
 uint1024_t subtr_op(uint1024_t x, uint1024_t y) {
     uint1024_t res;
     memcpy(&res, &x, sizeof(uint1024_t));
