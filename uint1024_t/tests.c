@@ -82,9 +82,24 @@ void test2() {
     printf("Test 2: \033[1;32mOK\033[0m\n");
 }
 
+void test3() {
+    char strx[] = "000002";
+    char stry[] = "00000009";
+    
+    uint1024_t x = stoi(strx), y = stoi(stry);
+    uint1024_t res = mult_op(x, y);
+    char* strres = itos(res);
+
+    assert(memcmp(strres, "18", 2) == 0); 
+    
+    free(strres);
+    printf("Test 3: \033[1;32mOK\033[0m\n");
+}
+
 int main() {
     test1();
     test2();
+    test3();
 
     return 0;
 }

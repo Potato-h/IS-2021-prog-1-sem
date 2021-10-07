@@ -147,6 +147,9 @@ uint1024_t stoi(const char* str) {
         return from_uint(0);
     }    
 
+    while (*str == '0')
+        str++;
+
     uint1024_t x = from_uint(0);
     size_t len = strlen(str);
 
