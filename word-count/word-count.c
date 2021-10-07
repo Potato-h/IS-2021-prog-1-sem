@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
     
     char* filename = getfilename(argc, argv);
     if (!filename) {
-        fprintf(stderr, "Invalid usage: filename not found");
+        fprintf(stderr, "Invalid usage: filename not found\n");
         return 0;
     }
 
@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
 
     char* buf = malloc(BUFSIZE);
     if (!buf) {
-        fprintf(stderr, "ERROR: failed to allocate memory");
+        fprintf(stderr, "ERROR: failed to allocate memory\n");
         return 0;
     }
     
