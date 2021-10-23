@@ -148,10 +148,11 @@ uint1024_t stoi(const char* str) {
         str++;
 
     uint1024_t x = from_uint(0);
+    uint1024_t digit = from_uint(10);
     size_t len = strlen(str);
 
     for (size_t i = 0; i < len; i++) {
-        x = mult_op(x, from_uint(10));
+        x = mult_op(x, digit);
         x = add_op(x, from_uint(str[i] - '0'));
     }
 
