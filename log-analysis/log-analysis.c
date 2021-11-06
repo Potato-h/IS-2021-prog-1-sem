@@ -26,7 +26,8 @@ static uint32_t lines(char* filename) {
     sprintf(command, "wc -l %s", filename);
     FILE* wc = popen(command, "r");
     fscanf(wc, "%u", &lines);
-    
+    fclose(wc);
+
     return lines;
 }
 
