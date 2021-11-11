@@ -1,6 +1,7 @@
-*/
 !uint1024_t/
 uint1024_t/uint1024
 uint1024_t/tests
 uint1024_t/uint1024.o
 .vscode
+log-analysis/NASA.log
+log-analysis/log-analysis
