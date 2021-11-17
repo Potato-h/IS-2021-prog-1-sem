@@ -1,7 +1,7 @@
 // Audio meta tag parser. See https://id3.org/id3v2.4.0-structure document
 // to understand topic and comments style agreement.
 
-#include <libid3v2.h>
+#include "libid3v2.h"
 
 // TODO: Solve memory allocation issues
 // TODO: Think about right API for show functions (return string instead of write into file)
@@ -9,11 +9,6 @@
 // TODO: Check that padding in structs doesn't cause any fread/fwrite problems
 // TODO: Make `user` readable output
 
-// Synchsafe 32 bit integer (in this format: 4 * %0xxxxxxx)
-// To understand why it is exist see mp3 format
-typedef struct id3v2_synchsafe32_t {
-    uint8_t inner[4];
-} id3v2_synchsafe32_t;
 
 uint32_t id3v2_synchsafe_to_uint32(id3v2_synchsafe32_t synchsafe) {
     uint32_t byte0 = synchsafe.inner[0];
@@ -23,26 +18,6 @@ uint32_t id3v2_synchsafe_to_uint32(id3v2_synchsafe32_t synchsafe) {
 
     return byte0 << 21 | byte1 << 14 | byte2 << 7 | byte3;
 }
-
-// TODO: make union from version or replace it with separate 
-// major and revision fields
-struct id3v2_header {
-    char id3[3];                // Always holds "ID3"
-
-    uint8_t version[2];         // Version. Always holds $40 00. 
-                                // version[0] -- major version
-                                // version[1] -- revision number 
-
-    uint8_t flags;              // Flag in following format: %abcd0000
-                                // a -- Unsynchronisation
-                                // b -- Extended header
-                                // c -- Experimental indicator
-                                // d -- Footer present
-
-    id3v2_synchsafe32_t size;   // Size as synchsafe 32 bit integer.
-                                // Size is the sum of the byte length of the extended
-                                // header, the padding and the frames after unsynchronisation.
-};
 
 // Decode header from input to header. Seek input to header size. 
 // TODO: add ID3 data search
@@ -70,18 +45,6 @@ int id3v2_show_header(FILE* output, struct id3v2_header* header) {
 
     return 0;
 }
-
-// TODO: update doc
-struct id3v2_exheader {
-    id3v2_synchsafe32_t size;   // Size as synchsafe 32 bit integer.
-
-    uint8_t flag_size;          // Number of flag bytes = $01
-                                // so size is 1 byte for each flag
-
-    uint8_t exflags;            // Extended Flags in following format: $xx 
-
-    void* flags_info;
-};
 
 struct id3v2_exheader* id3v2_allocate_exheader() {
     struct id3v2_exheader* exheader = (struct id3v2_exheader*)malloc(sizeof(struct id3v2_exheader));
@@ -111,28 +74,6 @@ void id3v2_free_exheader(struct id3v2_exheader** exheader) {
     fprintf(stderr, "unimplemented %s:%d\n", __FILE__, __LINE__);
     return;
 }
-
-// TODO: change void* to union
-// Constranins: content ptr should always hold memory allocated 
-// by malloc for correct free call.
-struct id3v2_frame {
-    char id[4];                 // Frame ID in following format: $xx xx xx xx
-
-    id3v2_synchsafe32_t size;   // Size as synchsafe 32 bit integer.
-
-    uint8_t flags[2];           // Flags in following format: $xx xx
-
-    void* content;              // Special content for each frame type, 
-                                // for example, TXXX frames has text after header,
-                                // but MLLT has own table format.
-
-    struct id3v2_frame* next;
-};
-
-enum id3v2_frame_type {
-    ID3V2_TEXT,
-    ID3V2_URL,
-};
 
 struct id3v2_frame* id3v2_allocate_frame() {
     struct id3v2_frame* frame = (struct id3v2_frame*)malloc(sizeof(struct id3v2_frame));
@@ -246,38 +187,6 @@ void id3v2_free_frame(struct id3v2_frame** frame) {
     free(*frame);
     *frame = NULL;
 }
-
-struct id3v2_padding {
-    uint8_t padding;
-};
-
-// Copy of the header, but with a different identifier.
-// Can be used to speed up search from the end of the file.
-struct id3v2_footer {
-    char id3[3];                // Always holds "3DI"
-
-    uint8_t version[2];         // Version. Always holds $40 00. 
-                                // version[0] -- major version
-                                // version[1] -- revision number 
-
-    uint8_t flags;              // Flag in following format: %abcd0000
-                                // a -- Unsynchronisation
-                                // b -- Extended header
-                                // c -- Experimental indicator
-                                // d -- Footer present
-
-    id3v2_synchsafe32_t size;   // Size as synchsafe 32 bit integer.
-                                // Size is the sum of the byte length of the extended
-                                // header, the padding and the frames after unsynchronisation.
-};
-
-struct id3v2_tag {
-    struct id3v2_header header;
-    struct id3v2_exheader* exheader;
-    struct id3v2_frame* frames_head;
-    struct id3v2_padding* padding;
-    struct id3v2_footer* footer;  
-};
 
 // Read tag information from input and decode it into tag.
 // Allocate memory for tag via malloc, so free_tag call is needed.
