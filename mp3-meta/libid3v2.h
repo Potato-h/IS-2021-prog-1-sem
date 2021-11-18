@@ -32,6 +32,11 @@
 // TODO: Print line in the error output
 // TODO: Check that padding in structs doesn't cause any fread/fwrite problems
 // TODO: Make `user` readable output
+// TODO: Solve frames type issues (Special structure for each frame type).
+// Different structure by pointer void* content or make sockaddr analog
+// TODO: Replace uint8_t encoding with enum
+// TODO: Should char* contains \0?
+// FIXME: Need allocators for each frame content type
 
 // Synchsafe 32 bit integer (in this format: 4 * %0xxxxxxx)
 // To understand why it is exist see mp3 format
@@ -112,14 +117,38 @@ struct id3v2_frame {
     struct id3v2_frame* next;
 };
 
+// All uses in function table MUST have same order
 enum id3v2_frame_type {
     ID3V2_TEXT,
     ID3V2_URL,
+    ID3V2_COMMENT,
+    ID3V2_UNSUPPOTRED,
 };
+
+enum id3v2_encoding {
+    ID3V2_ISO,
+    ID3V2_UTF16,
+    ID3V2_UTF16BE,
+    ID3V2_UTF8,
+};
+
+// TODO: share pointer to static memory to erase allocations
+// Convert enum into human readable string. Allocate string
+// by malloc, so free call is needed.
+char* id3v2_encoding_to_str(enum id3v2_encoding encoding);
 
 struct id3v2_frame* id3v2_allocate_frame();
 
 enum id3v2_frame_type id3v2_get_frame_type(char* id);
+
+struct id3v2_text_frame_content {
+    enum id3v2_encoding encoding; // $xx
+    char* text;
+};
+
+// Text frame functions
+
+struct id3v2_text_frame_content* id3v2_allocate_text_frame_content();
 
 int id3v2_decode_text_frame(FILE* input, struct id3v2_frame** frame);
 
@@ -127,6 +156,35 @@ int id3v2_encode_text_frame(FILE* output, struct id3v2_frame* frame);
 
 // TODO: implement different encodings
 int id3v2_show_text_frame(FILE* output, struct id3v2_frame* frame);
+
+void id3v2_free_text_frame_content(struct id3v2_text_frame_content** frame);
+
+struct id3v2_url_frame_content {
+    char* url;
+};
+
+// URL frame functions
+
+int id3v2_decode_url_frame(FILE* input, struct id3v2_frame** frame);
+
+int id3v2_encode_url_frame(FILE* output, struct id3v2_frame* frame);
+
+int id3v2_show_url_frame(FILE* output, struct id3v2_frame* frame);
+
+struct id3v2_comment_frame_content {
+    uint8_t encoding;       // $xx
+    uint8_t language[3];    // $xx xx xx
+    char* description;      // Description always ends with $00
+    char* text;             // Actual comment
+};
+
+// Comment frame functions
+
+int id3v2_decode_comment_frame(FILE* input, struct id3v2_frame** frame);
+
+int id3v2_encode_comment_frame(FILE* output, struct id3v2_frame* frame);
+
+int id3v2_show_comment_frame(FILE* output, struct id3v2_frame* frame);
 
 // Decode one frame from input to frame. Seek input to frame size.
 int id3v2_decode_frame(FILE* input, struct id3v2_frame** frame);
