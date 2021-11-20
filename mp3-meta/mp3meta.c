@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 
     for (int i = 0; i < argc; i++) {
         if (strncmp(argv[i], FILEPATH_ARG, strlen(FILEPATH_ARG)) == 0) {
-            file = fopen(argv[i] + strlen(FILEPATH_ARG), "rw");
+            file = fopen(argv[i] + strlen(FILEPATH_ARG), "rwb");
 
             if (!file) {
                 fprintf(stderr, "Cannot open file with filename = %s\n", argv[i] + strlen(FILEPATH_ARG));
