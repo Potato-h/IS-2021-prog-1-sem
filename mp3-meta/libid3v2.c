@@ -9,17 +9,15 @@
 // TODO: Check that padding in structs doesn't cause any fread/fwrite problems
 // TODO: Make `user` readable output
 
-char* id3v2_encoding_to_str(enum id3v2_encoding encoding) {
-    char* res = malloc(10 * sizeof(char));
+const char* id3v2_encoding_to_str(enum id3v2_encoding encoding) {
+    static const char* encodings[] = {
+        "ISO",
+        "UTF16",
+        "UTF16BE",
+        "UTF8",
+    };
     
-    switch (encoding) {
-        case ID3V2_ISO:     strncpy(res, "ISO", strlen("ISO")); break;
-        case ID3V2_UTF16:   strncpy(res, "UTF16", strlen("UTF16")); break;
-        case ID3V2_UTF16BE: strncpy(res, "UTF16BE", strlen("UTF16BE")); break;
-        case ID3V2_UTF8:    strncpy(res, "UTF8", strlen("UTF8")); break;
-    }
-
-    return res;
+    return encodings[encoding];
 }
 
 uint32_t id3v2_synchsafe_to_uint32(id3v2_synchsafe32_t synchsafe) {
@@ -168,8 +166,7 @@ int id3v2_encode_text_frame(FILE* output, struct id3v2_frame* frame) {
 int id3v2_show_text_frame(FILE* output, struct id3v2_frame* frame) {
     size_t content_size = id3v2_synchsafe_to_uint32(frame->size);
     struct id3v2_text_frame_content* content = frame->content;
-    char* encoding = id3v2_encoding_to_str(content->encoding);
-
+    
     fprintf(
         output,
         "id: %.4s\n"
@@ -180,13 +177,24 @@ int id3v2_show_text_frame(FILE* output, struct id3v2_frame* frame) {
         frame->id,
         content_size,
         BYTE_TO_BINARY(frame->flags[0]), BYTE_TO_BINARY(frame->flags[1]),
-        encoding,
+        id3v2_encoding_to_str(content->encoding),
         content_size - 1, content->text
     );
     
-    free(encoding);
-
     return 0;
+}
+
+void id3v2_free_text_frame_content(void** content) {
+    struct id3v2_text_frame_content* text_content = *content; 
+    free(text_content->text);
+    free(text_content);
+    *content = NULL;
+}
+
+struct id3v2_url_frame_content* id3v2_allocate_url_frame_content(size_t content_size) {
+    struct id3v2_url_frame_content* content = malloc(sizeof(struct id3v2_url_frame_content));
+    content->url = malloc(sizeof(char) * content_size);
+    return content;
 }
 
 int id3v2_decode_url_frame(FILE* input, struct id3v2_frame** frame) {
@@ -199,9 +207,10 @@ int id3v2_decode_url_frame(FILE* input, struct id3v2_frame** frame) {
     }
     
     size_t text_size = id3v2_synchsafe_to_uint32((*frame)->size); 
-    (*frame)->content = (char*)malloc(text_size);
-    
-    if (fread((*frame)->content, sizeof(char), text_size, input) < text_size) {
+    (*frame)->content = id3v2_allocate_url_frame_content(text_size);
+    struct id3v2_url_frame_content* content = (*frame)->content;
+
+    if (fread(content->url, sizeof(char), text_size, input) < text_size) {
         fprintf(stderr, "%s(): Failed to read content of frame from file: %s:%d\n", __func__, __FILE__, __LINE__);
         return 1;
     }
@@ -217,8 +226,9 @@ int id3v2_encode_url_frame(FILE* output, struct id3v2_frame* frame) {
     }
     
     size_t text_size = id3v2_synchsafe_to_uint32(frame->size);
+    struct id3v2_url_frame_content* content = frame->content;
 
-    if (fwrite(frame->content, sizeof(char), text_size, output) < text_size) {
+    if (fwrite(content->url, sizeof(char), text_size, output) < text_size) {
         fprintf(stderr, "%s(): Failed to write content of frame into file: %s:%d\n", __func__, __FILE__, __LINE__);
         return 1;
     }
@@ -244,6 +254,17 @@ int id3v2_show_url_frame(FILE* output, struct id3v2_frame* frame) {
     return 0;
 }
 
+void id3v2_free_url_frame_content(void** content) {
+    struct id3v2_url_frame_content* url_content = *content;
+    free(url_content->url);
+    free(url_content);
+    *content = NULL;
+}
+
+struct id3v2_comment_frame_content* id3v2_allocate_comment_frame_content() {
+    return malloc(sizeof(struct id3v2_comment_frame_content));
+}
+
 int id3v2_decode_comment_frame(FILE* input, struct id3v2_frame** frame) {
     *frame = id3v2_allocate_frame();
 
@@ -253,13 +274,39 @@ int id3v2_decode_comment_frame(FILE* input, struct id3v2_frame** frame) {
         return 1;
     }
     
-    size_t text_size = id3v2_synchsafe_to_uint32((*frame)->size); 
-    (*frame)->content = (char*)malloc(text_size);
-    
-    if (fread((*frame)->content, sizeof(char), text_size, input) < text_size) {
-        fprintf(stderr, "%s(): Failed to read content of frame from file: %s:%d\n", __func__, __FILE__, __LINE__);
+    size_t header_size = 
+        offsetof(struct id3v2_comment_frame_content, language) 
+        + member_size(struct id3v2_comment_frame_content, language);
+
+    size_t content_size = id3v2_synchsafe_to_uint32((*frame)->size) - header_size;
+    (*frame)->content = id3v2_allocate_comment_frame_content(); 
+    struct id3v2_comment_frame_content* content = (*frame)->content;
+    char* buffer = malloc(sizeof(char) * content_size);
+
+    // Read COMM header
+    if (fread(content, sizeof(char), header_size, input) < header_size) {
+        fprintf(stderr, "%s(): Failed to read metadata of COMM frame from file: %s:%d\n", __func__, __FILE__, __LINE__);
         return 1;
     }
+
+    // Read description and text
+    if (fread(buffer, sizeof(char), content_size, input) < content_size) {
+        fprintf(stderr, "%s(): Failed to read content of COMM frame from file: %s:%d\n", __func__, __FILE__, __LINE__);
+        return 1;
+    }
+
+    // Fill description. It is end with \0 according to the format.
+    size_t descr_len = strlen(buffer);
+    content->description = malloc(sizeof(char) * (descr_len + 1));
+    strncpy(content->description, buffer, descr_len);
+    content->description[descr_len] = 0;
+
+    // Fill actual text. It isn't end with \0 according to the format.
+    size_t text_len = content_size - descr_len - 1; // -1 for \0
+    content->text = malloc(sizeof(char) * text_len);
+    strncpy(content->text, buffer + descr_len + 1, text_len);
+
+    free(buffer);
 
     return 0;
 }
@@ -271,38 +318,78 @@ int id3v2_encode_comment_frame(FILE* output, struct id3v2_frame* frame) {
         return 1;
     }
     
-    size_t text_size = id3v2_synchsafe_to_uint32(frame->size);
+    size_t header_size = 
+        offsetof(struct id3v2_comment_frame_content, language) 
+        + member_size(struct id3v2_comment_frame_content, language);
 
-    if (fwrite(frame->content, sizeof(char), text_size, output) < text_size) {
-        fprintf(stderr, "%s(): Failed to write content of frame into file: %s:%d\n", __func__, __FILE__, __LINE__);
+    size_t content_size = id3v2_synchsafe_to_uint32(frame->size) - header_size;
+    struct id3v2_comment_frame_content* content = frame->content;
+
+    if (fwrite(content, sizeof(char), header_size, output) < header_size) {
+        fprintf(stderr, "%s(): Failed to write metadata of COMM frame into file: %s:%d\n", __func__, __FILE__, __LINE__);
         return 1;
     }
+
+    size_t descr_len = strlen(content->description);
+    size_t text_len = content_size - descr_len - 1; // -1 for \0
+
+    char* buffer = malloc(sizeof(char) * content_size);
+    // According to the format, \0 at the end is important
+    strncpy(buffer, content->description, descr_len);
+    strncpy(buffer + descr_len + 1, content->text, text_len);
+
+    if (fwrite(buffer, sizeof(char), content_size, output) < content_size) {
+        fprintf(stderr, "%s(): Failed to write content of COMM frame into file: %s:%d\n", __func__, __FILE__, __LINE__);
+        return 1;
+    }
+
+    free(buffer);
 
     return 0;
 }
 
 int id3v2_show_comment_frame(FILE* output, struct id3v2_frame* frame) {
-    size_t text_size = id3v2_synchsafe_to_uint32(frame->size);
+    struct id3v2_comment_frame_content* content = frame->content;
+    
+    size_t header_size = 
+        offsetof(struct id3v2_comment_frame_content, language) 
+        + member_size(struct id3v2_comment_frame_content, language);
+
+    size_t content_size = id3v2_synchsafe_to_uint32(frame->size) - header_size;
     
     fprintf(
         output,
         "id: %.4s\n"
         "size: %u\n"
         "flags: 0b" BYTE_TO_BINARY_PATTERN " 0b" BYTE_TO_BINARY_PATTERN "\n"
-        "content: %.*s\n",
+        "encoding: %s\n"
+        "language: %.3s\n"
+        "description: %s\n"
+        "text: %.*s\n",
         frame->id,
-        text_size,
+        content_size + header_size,
         BYTE_TO_BINARY(frame->flags[0]), BYTE_TO_BINARY(frame->flags[1]),
-        text_size, frame->content
+        id3v2_encoding_to_str(content->encoding),
+        content->language,
+        content->description,
+        content_size - strlen(content->description) - 1, content->text
     );
+}
+
+void id3v2_free_comment_frame_content(void** content) {
+    struct id3v2_comment_frame_content* comment_content = *content;
+    free(comment_content->description);
+    free(comment_content->text);
+    free(comment_content);
+    *content = NULL;
 }
 
 // Decode one frame from input to frame. Seek input to frame size.
 int id3v2_decode_frame(FILE* input, struct id3v2_frame** frame) {
     static int (*frame_decoders[])(FILE*, struct id3v2_frame**) = {
-        id3v2_decode_text_frame,        // ID3V2_TEXT
-        id3v2_decode_url_frame,         // ID3V2_URL
-        id3v2_decode_comment_frame,     // ID3V2_COMMENT 
+        id3v2_decode_text_frame,            // ID3V2_TEXT
+        id3v2_decode_url_frame,             // ID3V2_URL
+        id3v2_decode_comment_frame,         // ID3V2_COMMENT 
     };
     
     // Read id and return SEEK before id
@@ -313,7 +400,7 @@ int id3v2_decode_frame(FILE* input, struct id3v2_frame** frame) {
     enum id3v2_frame_type type = id3v2_get_frame_type(id);
 
     if (type == ID3V2_UNSUPPOTRED) {
-        fprintf(stderr, "%s(): Can not decode unsupported type frame: %s:%d\n", __func__, __FILE__, __LINE__);
+        fprintf(stderr, "%s(): Can not decode unsupported type frame (%.4s): %s:%d\n", __func__, id, __FILE__, __LINE__);
         return 1;
     }
 
@@ -327,9 +414,9 @@ int id3v2_encode_frame(FILE* output, struct id3v2_frame* frame) {
 
 int id3v2_show_frame(FILE* output, struct id3v2_frame* frame) {
     static int (*frame_printers[])(FILE*, struct id3v2_frame*) = {
-        id3v2_show_text_frame,      // ID3V2_TEXT
-        id3v2_show_url_frame,       // ID3V2_URL
-        id3v2_show_comment_frame,   // ID3V2_COMMENT
+        id3v2_show_text_frame,              // ID3V2_TEXT
+        id3v2_show_url_frame,               // ID3V2_URL
+        id3v2_show_comment_frame,           // ID3V2_COMMENT
     };
 
     enum id3v2_frame_type type = id3v2_get_frame_type(frame->id);
@@ -345,7 +432,15 @@ int id3v2_show_frame(FILE* output, struct id3v2_frame* frame) {
 // TODO: Need normal free since each frame has his own structure content
 // Free frame. Set frame pointer to NULL.
 void id3v2_free_frame(struct id3v2_frame** frame) {
-    fprintf(stderr, "%s(): unimplemented: %s:%d\n", __func__, __FILE__, __LINE__);
+    static void (*content_destructors[])(void**) = {
+        id3v2_free_text_frame_content,      // ID3V2_TEXT
+        id3v2_free_url_frame_content,       // ID3V2_URL
+        id3v2_free_comment_frame_content,   // ID3V2_COMMENT
+    };
+
+    enum id3v2_frame_type type = id3v2_get_frame_type((*frame)->id);
+
+    content_destructors[type](&(*frame)->content);
     free(*frame);
     *frame = NULL;
 }

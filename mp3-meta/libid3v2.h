@@ -37,6 +37,7 @@
 // TODO: Replace uint8_t encoding with enum
 // TODO: Should char* contains \0?
 // FIXME: Need allocators for each frame content type
+// TODO: Check all offset and member_size
 
 // Synchsafe 32 bit integer (in this format: 4 * %0xxxxxxx)
 // To understand why it is exist see mp3 format
@@ -48,6 +49,7 @@ uint32_t id3v2_synchsafe_to_uint32(id3v2_synchsafe32_t synchsafe);
 
 // TODO: make union from version or replace it with separate 
 // major and revision fields
+// Constrain: decode and encode functions consider, that there is no aligen
 struct id3v2_header {
     char id3[3];                // Always holds "ID3"
 
@@ -64,7 +66,7 @@ struct id3v2_header {
     id3v2_synchsafe32_t size;   // Size as synchsafe 32 bit integer.
                                 // Size is the sum of the byte length of the extended
                                 // header, the padding and the frames after unsynchronisation.
-};
+} __attribute__((packed));
 
 // Decode header from input to header. Seek input to header size. 
 // TODO: add ID3 data search
@@ -85,7 +87,7 @@ struct id3v2_exheader {
     uint8_t exflags;            // Extended Flags in following format: $xx 
 
     void* flags_info;
-};
+} __attribute__((packed));
 
 struct id3v2_exheader* id3v2_allocate_exheader();
 
@@ -115,7 +117,7 @@ struct id3v2_frame {
                                 // but MLLT has own table format.
 
     struct id3v2_frame* next;
-};
+} __attribute__((packed));
 
 // All uses in function table MUST have same order
 enum id3v2_frame_type {
@@ -132,12 +134,9 @@ enum id3v2_encoding {
     ID3V2_UTF8,
 };
 
-// TODO: share pointer to static memory to erase allocations
-// Convert enum into human readable string. Allocate string
-// by malloc, so free call is needed.
-char* id3v2_encoding_to_str(enum id3v2_encoding encoding);
-
-struct id3v2_frame* id3v2_allocate_frame();
+// Convert enum into human readable string. Share static memory
+// so free call on this pointer is forbidden. 
+const char* id3v2_encoding_to_str(enum id3v2_encoding encoding);
 
 enum id3v2_frame_type id3v2_get_frame_type(char* id);
 
@@ -148,7 +147,7 @@ struct id3v2_text_frame_content {
 
 // Text frame functions
 
-struct id3v2_text_frame_content* id3v2_allocate_text_frame_content();
+struct id3v2_text_frame_content* id3v2_allocate_text_frame_content(size_t content_size);
 
 int id3v2_decode_text_frame(FILE* input, struct id3v2_frame** frame);
 
@@ -157,7 +156,7 @@ int id3v2_encode_text_frame(FILE* output, struct id3v2_frame* frame);
 // TODO: implement different encodings
 int id3v2_show_text_frame(FILE* output, struct id3v2_frame* frame);
 
-void id3v2_free_text_frame_content(struct id3v2_text_frame_content** frame);
+void id3v2_free_text_frame_content(void** content);
 
 struct id3v2_url_frame_content {
     char* url;
@@ -165,20 +164,26 @@ struct id3v2_url_frame_content {
 
 // URL frame functions
 
+struct id3v2_url_frame_content* id3v2_allocate_url_frame_content(size_t content_size);
+
 int id3v2_decode_url_frame(FILE* input, struct id3v2_frame** frame);
 
 int id3v2_encode_url_frame(FILE* output, struct id3v2_frame* frame);
 
 int id3v2_show_url_frame(FILE* output, struct id3v2_frame* frame);
 
+void id3v2_free_url_frame_content(void** content);
+
 struct id3v2_comment_frame_content {
     uint8_t encoding;       // $xx
     uint8_t language[3];    // $xx xx xx
     char* description;      // Description always ends with $00
     char* text;             // Actual comment
-};
+} __attribute__((packed));
 
 // Comment frame functions
+
+struct id3v2_comment_frame_content* id3v2_allocate_comment_frame_content();
 
 int id3v2_decode_comment_frame(FILE* input, struct id3v2_frame** frame);
 
@@ -186,12 +191,16 @@ int id3v2_encode_comment_frame(FILE* output, struct id3v2_frame* frame);
 
 int id3v2_show_comment_frame(FILE* output, struct id3v2_frame* frame);
 
+void id3v2_free_comment_frame_content(void** content);
+
 // Decode one frame from input to frame. Seek input to frame size.
 int id3v2_decode_frame(FILE* input, struct id3v2_frame** frame);
 
 int id3v2_encode_frame(FILE* output, struct id3v2_frame* frame);
 
 int id3v2_show_frame(FILE* output, struct id3v2_frame* frame);
+
+struct id3v2_frame* id3v2_allocate_frame();
 
 // Free frame. Set exheader pointer to NULL.
 void id3v2_free_frame(struct id3v2_frame** frame);
@@ -218,7 +227,7 @@ struct id3v2_footer {
     id3v2_synchsafe32_t size;   // Size as synchsafe 32 bit integer.
                                 // Size is the sum of the byte length of the extended
                                 // header, the padding and the frames after unsynchronisation.
-};
+} __attribute__((packed));
 
 struct id3v2_tag {
     struct id3v2_header header;
