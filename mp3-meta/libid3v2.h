@@ -27,18 +27,11 @@
 
 #define member_size(type, member) sizeof(((type *)0)->member)
 
-// TODO: Solve memory allocation issues
 // TODO: Think about right API for show functions (return string instead of write into file)
-// TODO: Print line in the error output
-// TODO: Check that padding in structs doesn't cause any fread/fwrite problems
 // TODO: Make `user` readable output
-// TODO: Solve frames type issues (Special structure for each frame type).
-// Different structure by pointer void* content or make sockaddr analog
-// TODO: Replace uint8_t encoding with enum
 // TODO: Should char* contains \0?
-// FIXME: Need allocators for each frame content type
 // TODO: Check all offset and member_size
-// TODO: Make special functions for ID3V2_UNSUPPORTED
+// TODO: Add return code desription.
 
 // Synchsafe 32 bit integer (in this format: 4 * %0xxxxxxx)
 // To understand why it is exist see mp3 format

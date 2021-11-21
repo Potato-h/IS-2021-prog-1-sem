@@ -3,10 +3,7 @@
 
 #include "libid3v2.h"
 
-// TODO: Solve memory allocation issues
 // TODO: Think about right API for show functions (return string instead of write into file)
-// TODO: Print line in the error output
-// TODO: Check that padding in structs doesn't cause any fread/fwrite problems
 // TODO: Make `user` readable output
 
 #define RESET   "\033[0m"
@@ -137,6 +134,7 @@ struct id3v2_text_frame_content* id3v2_allocate_text_frame_content(size_t conten
 
 // FIXME: Need allocators for each frame content type
 // FIXME: Handle all errors in fread
+// Decode url frame. Seek input to frame size.
 int id3v2_decode_text_frame(FILE* input, struct id3v2_frame* frame) {
     size_t content_size = id3v2_synchsafe_to_uint32(frame->size);
     frame->content = id3v2_allocate_text_frame_content(content_size); 
@@ -148,6 +146,7 @@ int id3v2_decode_text_frame(FILE* input, struct id3v2_frame* frame) {
     return 0;
 }
 
+// Encode text frame into output.
 int id3v2_encode_text_frame(FILE* output, struct id3v2_frame* frame) {
     size_t content_size = id3v2_synchsafe_to_uint32(frame->size);
     struct id3v2_text_frame_content* content = frame->content;
@@ -159,6 +158,7 @@ int id3v2_encode_text_frame(FILE* output, struct id3v2_frame* frame) {
 }
 
 // TODO: implement different encodings
+// Print human readable information about text frame into output.
 int id3v2_show_text_frame(FILE* output, struct id3v2_frame* frame) {
     size_t content_size = id3v2_synchsafe_to_uint32(frame->size);
     struct id3v2_text_frame_content* content = frame->content;
@@ -193,6 +193,7 @@ struct id3v2_url_frame_content* id3v2_allocate_url_frame_content(size_t content_
     return content;
 }
 
+// Decode url frame. Seek input to frame size.
 int id3v2_decode_url_frame(FILE* input, struct id3v2_frame* frame) {
     size_t text_size = id3v2_synchsafe_to_uint32(frame->size); 
     frame->content = id3v2_allocate_url_frame_content(text_size);
@@ -206,6 +207,7 @@ int id3v2_decode_url_frame(FILE* input, struct id3v2_frame* frame) {
     return 0;
 }
 
+// Encode url frame into output.
 int id3v2_encode_url_frame(FILE* output, struct id3v2_frame* frame) {
     size_t text_size = id3v2_synchsafe_to_uint32(frame->size);
     struct id3v2_url_frame_content* content = frame->content;
@@ -218,6 +220,7 @@ int id3v2_encode_url_frame(FILE* output, struct id3v2_frame* frame) {
     return 0;   
 }
 
+// Print human readable information about url frame into output.
 int id3v2_show_url_frame(FILE* output, struct id3v2_frame* frame) {
     size_t text_size = id3v2_synchsafe_to_uint32(frame->size);
     struct id3v2_url_frame_content* content = frame->content;
@@ -248,6 +251,7 @@ struct id3v2_comment_frame_content* id3v2_allocate_comment_frame_content() {
     return malloc(sizeof(struct id3v2_comment_frame_content));
 }
 
+// Decode comment frame. Seek input to frame size.
 int id3v2_decode_comment_frame(FILE* input, struct id3v2_frame* frame) {
     size_t header_size = 
         offsetof(struct id3v2_comment_frame_content, language) 
@@ -286,6 +290,7 @@ int id3v2_decode_comment_frame(FILE* input, struct id3v2_frame* frame) {
     return 0;
 }
 
+// Encode comment frame into output.
 int id3v2_encode_comment_frame(FILE* output, struct id3v2_frame* frame) {
     size_t header_size = 
         offsetof(struct id3v2_comment_frame_content, language) 
@@ -317,6 +322,7 @@ int id3v2_encode_comment_frame(FILE* output, struct id3v2_frame* frame) {
     return 0;
 }
 
+// Print human readable information about comment frame into output.
 int id3v2_show_comment_frame(FILE* output, struct id3v2_frame* frame) {
     struct id3v2_comment_frame_content* content = frame->content;
     
@@ -360,6 +366,7 @@ void* id3v2_allocate_unsupported_frame_content(size_t content_size) {
     return malloc(content_size);
 }
 
+// Decode unsupported frame from input. Seek input to frame size.
 int id3v2_decode_unsupported_frame(FILE* input, struct id3v2_frame* frame) {
     size_t content_size = id3v2_synchsafe_to_uint32(frame->size);
     frame->content = id3v2_allocate_unsupported_frame_content(content_size);
@@ -372,6 +379,7 @@ int id3v2_decode_unsupported_frame(FILE* input, struct id3v2_frame* frame) {
     return 0;
 }
 
+// Encode unsupported frame into output.
 int id3v2_encode_unsupported_frame(FILE* output, struct id3v2_frame* frame) {
     size_t content_size = id3v2_synchsafe_to_uint32(frame->size);
     
@@ -383,6 +391,7 @@ int id3v2_encode_unsupported_frame(FILE* output, struct id3v2_frame* frame) {
     return 0;
 }
 
+// Print human readable information about unsupported frame into output.
 int id3v2_show_unsupported_frame(FILE* output, struct id3v2_frame* frame) {
     size_t content_size = id3v2_synchsafe_to_uint32(frame->size);
 
@@ -437,6 +446,7 @@ int id3v2_decode_frame(FILE* input, struct id3v2_frame** frame) {
     return frame_decoders[type](input, *frame);
 }
 
+// Encode generic frame into output.
 int id3v2_encode_frame(FILE* output, struct id3v2_frame* frame) {
     static int (*frame_encoders[])(FILE* output, struct id3v2_frame*) = {
         id3v2_encode_text_frame,                // ID3V2_TEXT
@@ -460,6 +470,7 @@ int id3v2_encode_frame(FILE* output, struct id3v2_frame* frame) {
     return frame_encoders[type](output, frame);
 }
 
+// Print generic frame data in human readble format into output.
 int id3v2_show_frame(FILE* output, struct id3v2_frame* frame) {
     static int (*frame_printers[])(FILE*, struct id3v2_frame*) = {
         id3v2_show_text_frame,                  // ID3V2_TEXT
@@ -477,7 +488,6 @@ int id3v2_show_frame(FILE* output, struct id3v2_frame* frame) {
     return frame_printers[type](output, frame);
 }
 
-// TODO: Need normal free since each frame has his own structure content
 // Free frame. Set frame pointer to NULL.
 void id3v2_free_frame(struct id3v2_frame** frame) {
     static void (*content_destructors[])(void**) = {
