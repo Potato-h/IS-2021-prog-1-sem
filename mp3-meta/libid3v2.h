@@ -125,7 +125,7 @@ enum id3v2_frame_type {
     ID3V2_TEXT,
     ID3V2_URL,
     ID3V2_COMMENT,
-    ID3V2_UNSUPPOTRED,
+    ID3V2_UNSUPPORTED,
 };
 
 enum id3v2_encoding {
