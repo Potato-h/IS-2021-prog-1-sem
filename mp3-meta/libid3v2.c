@@ -166,7 +166,7 @@ int id3v2_show_text_frame(FILE* output, struct id3v2_frame* frame) {
     fprintf(
         output,
         "id: %.4s\n"
-        "size: %u\n"
+        "size: %lu\n"
         "flags: 0b" BYTE_TO_BINARY_PATTERN " 0b" BYTE_TO_BINARY_PATTERN "\n"
         "encoding: %s\n"
         "content: %.*s\n",
@@ -174,7 +174,7 @@ int id3v2_show_text_frame(FILE* output, struct id3v2_frame* frame) {
         content_size,
         BYTE_TO_BINARY(frame->flags[0]), BYTE_TO_BINARY(frame->flags[1]),
         id3v2_encoding_to_str(content->encoding),
-        content_size - 1, content->text
+        (int)(content_size - 1), content->text
     );
     
     return 0;
@@ -199,7 +199,7 @@ int id3v2_decode_url_frame(FILE* input, struct id3v2_frame* frame) {
     struct id3v2_url_frame_content* content = frame->content;
 
     if (fread(content->url, sizeof(char), text_size, input) < text_size) {
-        fprintf(stderr, YELLOW "%s(): Failed to read content of frame from file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+        fprintf(stderr, RED "%s(): Failed to read content of frame from file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
         return 1;
     }
     
@@ -211,7 +211,7 @@ int id3v2_encode_url_frame(FILE* output, struct id3v2_frame* frame) {
     struct id3v2_url_frame_content* content = frame->content;
 
     if (fwrite(content->url, sizeof(char), text_size, output) < text_size) {
-        fprintf(stderr, YELLOW "%s(): Failed to write content of frame into file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+        fprintf(stderr, RED "%s(): Failed to write content of frame into file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
         return 1;
     }
 
@@ -220,17 +220,18 @@ int id3v2_encode_url_frame(FILE* output, struct id3v2_frame* frame) {
 
 int id3v2_show_url_frame(FILE* output, struct id3v2_frame* frame) {
     size_t text_size = id3v2_synchsafe_to_uint32(frame->size);
-    
+    struct id3v2_url_frame_content* content = frame->content;
+
     fprintf(
         output,
         "id: %.4s\n"
-        "size: %u\n"
+        "size: %lu\n"
         "flags: 0b" BYTE_TO_BINARY_PATTERN " 0b" BYTE_TO_BINARY_PATTERN "\n"
         "content: %.*s\n",
         frame->id,
         text_size,
         BYTE_TO_BINARY(frame->flags[0]), BYTE_TO_BINARY(frame->flags[1]),
-        text_size, frame->content
+        (int)text_size, content->url
     );
     
     return 0;
@@ -259,13 +260,13 @@ int id3v2_decode_comment_frame(FILE* input, struct id3v2_frame* frame) {
 
     // Read COMM header
     if (fread(content, sizeof(char), header_size, input) < header_size) {
-        fprintf(stderr, YELLOW "%s(): Failed to read metadata of COMM frame from file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+        fprintf(stderr, RED "%s(): Failed to read metadata of COMM frame from file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
         return 1;
     }
 
     // Read description and text
     if (fread(buffer, sizeof(char), content_size, input) < content_size) {
-        fprintf(stderr, YELLOW "%s(): Failed to read content of COMM frame from file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+        fprintf(stderr, RED "%s(): Failed to read content of COMM frame from file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
         return 1;
     }
 
@@ -294,7 +295,7 @@ int id3v2_encode_comment_frame(FILE* output, struct id3v2_frame* frame) {
     struct id3v2_comment_frame_content* content = frame->content;
 
     if (fwrite(content, sizeof(char), header_size, output) < header_size) {
-        fprintf(stderr, YELLOW "%s(): Failed to write metadata of COMM frame into file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+        fprintf(stderr, RED "%s(): Failed to write metadata of COMM frame into file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
         return 1;
     }
 
@@ -307,7 +308,7 @@ int id3v2_encode_comment_frame(FILE* output, struct id3v2_frame* frame) {
     strncpy(buffer + descr_len + 1, content->text, text_len);
 
     if (fwrite(buffer, sizeof(char), content_size, output) < content_size) {
-        fprintf(stderr, YELLOW "%s(): Failed to write content of COMM frame into file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+        fprintf(stderr, RED "%s(): Failed to write content of COMM frame into file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
         return 1;
     }
 
@@ -328,7 +329,7 @@ int id3v2_show_comment_frame(FILE* output, struct id3v2_frame* frame) {
     fprintf(
         output,
         "id: %.4s\n"
-        "size: %u\n"
+        "size: %lu\n"
         "flags: 0b" BYTE_TO_BINARY_PATTERN " 0b" BYTE_TO_BINARY_PATTERN "\n"
         "encoding: %s\n"
         "language: %.3s\n"
@@ -340,8 +341,10 @@ int id3v2_show_comment_frame(FILE* output, struct id3v2_frame* frame) {
         id3v2_encoding_to_str(content->encoding),
         content->language,
         content->description,
-        content_size - strlen(content->description) - 1, content->text
+        (int)(content_size - strlen(content->description) - 1), content->text
     );
+
+    return 0;
 }
 
 void id3v2_free_comment_frame_content(void** content) {
@@ -352,28 +355,83 @@ void id3v2_free_comment_frame_content(void** content) {
     *content = NULL;
 }
 
+// Yes, it's just a malloc wrapper, but it make code more general
+void* id3v2_allocate_unsupported_frame_content(size_t content_size) {
+    return malloc(content_size);
+}
+
+int id3v2_decode_unsupported_frame(FILE* input, struct id3v2_frame* frame) {
+    size_t content_size = id3v2_synchsafe_to_uint32(frame->size);
+    frame->content = id3v2_allocate_unsupported_frame_content(content_size);
+
+    if (fread(frame->content, sizeof(char), content_size, input) < content_size) {
+        fprintf(stderr, RED "%s(): Failed to read unsupported frame content: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+        return 1;
+    }
+    
+    return 0;
+}
+
+int id3v2_encode_unsupported_frame(FILE* output, struct id3v2_frame* frame) {
+    size_t content_size = id3v2_synchsafe_to_uint32(frame->size);
+    
+    if (fwrite(frame->content, sizeof(char), content_size, output) < content_size) {
+        fprintf(stderr, RED "%s(): Failed to write unsupported frame content: %s:%d" RESET, __func__, __FILE__, __LINE__);
+        return 1;
+    }
+    
+    return 0;
+}
+
+int id3v2_show_unsupported_frame(FILE* output, struct id3v2_frame* frame) {
+    size_t content_size = id3v2_synchsafe_to_uint32(frame->size);
+
+    fprintf(
+        output,
+        "id: %.4s\n"
+        "size: %lu\n"
+        "flags: 0b" BYTE_TO_BINARY_PATTERN " 0b" BYTE_TO_BINARY_PATTERN "\n"
+        "Unknow content: %.*s\n",
+        frame->id,
+        content_size,
+        BYTE_TO_BINARY(frame->flags[0]), BYTE_TO_BINARY(frame->flags[1]),
+        (int)content_size, (char*)frame->content
+    );
+    
+    return 0;
+}
+
+void id3v2_free_unsupported_free_content(void** content) {
+    free(*content);
+    *content = NULL;
+}
+
 // Decode one frame from input to frame. Seek input to frame size.
 int id3v2_decode_frame(FILE* input, struct id3v2_frame** frame) {
     static int (*frame_decoders[])(FILE*, struct id3v2_frame*) = {
-        id3v2_decode_text_frame,            // ID3V2_TEXT
-        id3v2_decode_url_frame,             // ID3V2_URL
-        id3v2_decode_comment_frame,         // ID3V2_COMMENT 
+        id3v2_decode_text_frame,                // ID3V2_TEXT
+        id3v2_decode_url_frame,                 // ID3V2_URL
+        id3v2_decode_comment_frame,             // ID3V2_COMMENT 
+        id3v2_decode_unsupported_frame,         // ID3V2_UNSUPPORTED
     };
     
     *frame = id3v2_allocate_frame();
 
     // Read frame header 
     if (fread(*frame, offsetof(struct id3v2_frame, flags) + member_size(struct id3v2_frame, flags), 1, input) < 1) {
-        fprintf(stderr, YELLOW "%s(): Failed to read header of frame from file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+        fprintf(stderr, RED "%s(): Failed to read header of frame from file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+        return 1;
+    }
+
+    if (strncmp((*frame)->id, "\0\0\0\0", 4) == 0) {
+        // Padding has been detected
         return 1;
     }
 
     enum id3v2_frame_type type = id3v2_get_frame_type((*frame)->id);
 
     if (type == ID3V2_UNSUPPORTED) {
-        fprintf(stderr, YELLOW "%s(): Can not decode unsupported type frame (%.4s): %s:%d\n" RESET, __func__, (*frame)->id, __FILE__, __LINE__);
-        fseek(input, id3v2_synchsafe_to_uint32((*frame)->size), SEEK_CUR); // Skip unsupported frame
-        return 1;
+        fprintf(stderr, YELLOW "%s(): Try decode unsupported type frame (%.4s): %s:%d\n" RESET, __func__, (*frame)->id, __FILE__, __LINE__);
     }
 
     return frame_decoders[type](input, *frame);
@@ -381,22 +439,22 @@ int id3v2_decode_frame(FILE* input, struct id3v2_frame** frame) {
 
 int id3v2_encode_frame(FILE* output, struct id3v2_frame* frame) {
     static int (*frame_encoders[])(FILE* output, struct id3v2_frame*) = {
-        id3v2_encode_text_frame,        // ID3V2_TEXT
-        id3v2_encode_url_frame,         // ID3V2_URL
-        id3v2_encode_comment_frame,     // ID3V2_COMMENT
+        id3v2_encode_text_frame,                // ID3V2_TEXT
+        id3v2_encode_url_frame,                 // ID3V2_URL
+        id3v2_encode_comment_frame,             // ID3V2_COMMENT
+        id3v2_encode_unsupported_frame,         // ID3V2_UNSUPPORTED
     };
     
     // Write frame header
     if (fwrite(frame, offsetof(struct id3v2_frame, flags) + member_size(struct id3v2_frame, flags), 1, output) < 1) {
-        fprintf(stderr, YELLOW "%s(): Failed to write header of frame into file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+        fprintf(stderr, RED "%s(): Failed to write header of frame into file: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
         return 1;
     }
     
     enum id3v2_frame_type type = id3v2_get_frame_type(frame->id);
 
     if (type == ID3V2_UNSUPPORTED) {
-        fprintf(stderr, YELLOW "%s(): Can not encode unsupported frame type %.4s: %s:%d" RESET, __func__, frame->id, __FILE__, __LINE__);
-        return 1;
+        fprintf(stderr, YELLOW "%s(): Try encode unsupported frame type %.4s: %s:%d" RESET, __func__, frame->id, __FILE__, __LINE__);
     }
 
     return frame_encoders[type](output, frame);
@@ -404,16 +462,16 @@ int id3v2_encode_frame(FILE* output, struct id3v2_frame* frame) {
 
 int id3v2_show_frame(FILE* output, struct id3v2_frame* frame) {
     static int (*frame_printers[])(FILE*, struct id3v2_frame*) = {
-        id3v2_show_text_frame,              // ID3V2_TEXT
-        id3v2_show_url_frame,               // ID3V2_URL
-        id3v2_show_comment_frame,           // ID3V2_COMMENT
+        id3v2_show_text_frame,                  // ID3V2_TEXT
+        id3v2_show_url_frame,                   // ID3V2_URL
+        id3v2_show_comment_frame,               // ID3V2_COMMENT
+        id3v2_show_unsupported_frame,           // ID3V2_UNSUPPORTED
     };
 
     enum id3v2_frame_type type = id3v2_get_frame_type(frame->id);
     
     if (type == ID3V2_UNSUPPORTED) {
-        fprintf(stderr, YELLOW "%s(): Can not show unsupported frame type (%.4s): %s:%d\n" RESET, __func__, frame->id, __FILE__, __LINE__);
-        return 1;
+        fprintf(stderr, YELLOW "%s(): Try show unsupported frame type (%.4s): %s:%d\n" RESET, __func__, frame->id, __FILE__, __LINE__);
     }
     
     return frame_printers[type](output, frame);
@@ -423,17 +481,15 @@ int id3v2_show_frame(FILE* output, struct id3v2_frame* frame) {
 // Free frame. Set frame pointer to NULL.
 void id3v2_free_frame(struct id3v2_frame** frame) {
     static void (*content_destructors[])(void**) = {
-        id3v2_free_text_frame_content,      // ID3V2_TEXT
-        id3v2_free_url_frame_content,       // ID3V2_URL
-        id3v2_free_comment_frame_content,   // ID3V2_COMMENT
+        id3v2_free_text_frame_content,          // ID3V2_TEXT
+        id3v2_free_url_frame_content,           // ID3V2_URL
+        id3v2_free_comment_frame_content,       // ID3V2_COMMENT
+        id3v2_free_unsupported_free_content,    // ID3V2_UNSUPPORTED
     };
 
     enum id3v2_frame_type type = id3v2_get_frame_type((*frame)->id);
 
-    if (type < ID3V2_UNSUPPORTED) {
-        content_destructors[type](&(*frame)->content);
-    }
-
+    content_destructors[type](&(*frame)->content);    
     free(*frame);
     *frame = NULL;
 }
@@ -445,13 +501,13 @@ int id3v2_decode_tag(FILE* input, struct id3v2_tag** tag) {
     *tag = (struct id3v2_tag*)malloc(sizeof(struct id3v2_tag));
 
     if (id3v2_decode_header(input, &(*tag)->header) != 0) {
-        fprintf(stderr, YELLOW "%s(): Failed to decode header: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+        fprintf(stderr, RED "%s(): Failed to decode header: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
         return 1;
     }
 
     if ((*tag)->header.flags & EXHEADER) {
         if (id3v2_decode_exheader(input, &(*tag)->exheader) != 0) {
-            fprintf(stderr, YELLOW "%s(): Failed to decode extended header: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+            fprintf(stderr, RED "%s(): Failed to decode extended header: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
             return 1;
         }
     }
@@ -463,7 +519,8 @@ int id3v2_decode_tag(FILE* input, struct id3v2_tag** tag) {
     // TODO: Check validity of while condition    
     while (frames_size < tag_size) {
         if (id3v2_decode_frame(input, current_frame) != 0) {
-            fprintf(stderr, YELLOW "%s(): Failed to decode frame: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+            fprintf(stderr, RED "%s(): Failed to decode frame: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+            return 1;
         }
 
         frames_size += id3v2_synchsafe_to_uint32((*current_frame)->size);
@@ -479,12 +536,12 @@ int id3v2_decode_tag(FILE* input, struct id3v2_tag** tag) {
 // Return error code (0 in success case).
 int id3v2_encode_tag(FILE* output, struct id3v2_tag* tag) {
     if (id3v2_encode_header(output, &tag->header) != 0) {
-        fprintf(stderr, YELLOW "%s(): Failed to encode header: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+        fprintf(stderr, RED "%s(): Failed to encode header: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
         return 1;
     }
 
     if (id3v2_encode_exheader(output, tag->exheader) != 0) {
-        fprintf(stderr, YELLOW "%s(): Failed to encode exheader: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+        fprintf(stderr, RED "%s(): Failed to encode exheader: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
         return 1;
     }
     
@@ -492,7 +549,7 @@ int id3v2_encode_tag(FILE* output, struct id3v2_tag* tag) {
     
     while (current_frame) {
         if (id3v2_encode_frame(output, current_frame) != 0) {
-            fprintf(stderr, YELLOW "%s(): Failed to encode frame: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+            fprintf(stderr, RED "%s(): Failed to encode frame: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
             return 1;
         }
 
@@ -508,12 +565,12 @@ int id3v2_encode_tag(FILE* output, struct id3v2_tag* tag) {
 // Return error code (0 in success case).
 int id3v2_show_tag(FILE* output, struct id3v2_tag* tag) {
      if (id3v2_show_header(output, &tag->header) != 0) {
-        fprintf(stderr, YELLOW "%s(): Failed to show header: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+        fprintf(stderr, RED "%s(): Failed to show header: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
         return 1;
     }
 
     if (id3v2_show_exheader(output, tag->exheader) != 0) {
-        fprintf(stderr, YELLOW "%s(): Failed to show exheader: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+        fprintf(stderr, RED "%s(): Failed to show exheader: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
         return 1;
     }
     
@@ -521,7 +578,7 @@ int id3v2_show_tag(FILE* output, struct id3v2_tag* tag) {
     
     while (current_frame) {
         if (id3v2_show_frame(output, current_frame) != 0) {
-            fprintf(stderr, YELLOW "%s(): Failed to show frame: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
+            fprintf(stderr, RED "%s(): Failed to show frame: %s:%d\n" RESET, __func__, __FILE__, __LINE__);
         }
 
         current_frame = current_frame->next;

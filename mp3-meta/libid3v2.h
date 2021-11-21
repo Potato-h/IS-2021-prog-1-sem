@@ -194,6 +194,19 @@ int id3v2_show_comment_frame(FILE* output, struct id3v2_frame* frame);
 
 void id3v2_free_comment_frame_content(void** content);
 
+// Unsupported frame functions
+void* id3v2_allocate_unsupported_frame_content(size_t content_size);
+
+int id3v2_decode_unsupported_frame(FILE* input, struct id3v2_frame* frame);
+
+int id3v2_encode_unsupported_frame(FILE* output, struct id3v2_frame* frame);
+
+int id3v2_show_unsupported_frame(FILE* output, struct id3v2_frame* frame);
+
+void id3v2_free_unsupported_frame_content(void** content);
+
+// General frame functions
+
 // Decode one frame from input to frame. Seek input to frame size.
 int id3v2_decode_frame(FILE* input, struct id3v2_frame** frame);
 
