@@ -38,6 +38,7 @@
 // TODO: Should char* contains \0?
 // FIXME: Need allocators for each frame content type
 // TODO: Check all offset and member_size
+// TODO: Make special functions for ID3V2_UNSUPPORTED
 
 // Synchsafe 32 bit integer (in this format: 4 * %0xxxxxxx)
 // To understand why it is exist see mp3 format
@@ -149,7 +150,7 @@ struct id3v2_text_frame_content {
 
 struct id3v2_text_frame_content* id3v2_allocate_text_frame_content(size_t content_size);
 
-int id3v2_decode_text_frame(FILE* input, struct id3v2_frame** frame);
+int id3v2_decode_text_frame(FILE* input, struct id3v2_frame* frame);
 
 int id3v2_encode_text_frame(FILE* output, struct id3v2_frame* frame);
 
@@ -166,7 +167,7 @@ struct id3v2_url_frame_content {
 
 struct id3v2_url_frame_content* id3v2_allocate_url_frame_content(size_t content_size);
 
-int id3v2_decode_url_frame(FILE* input, struct id3v2_frame** frame);
+int id3v2_decode_url_frame(FILE* input, struct id3v2_frame* frame);
 
 int id3v2_encode_url_frame(FILE* output, struct id3v2_frame* frame);
 
@@ -185,7 +186,7 @@ struct id3v2_comment_frame_content {
 
 struct id3v2_comment_frame_content* id3v2_allocate_comment_frame_content();
 
-int id3v2_decode_comment_frame(FILE* input, struct id3v2_frame** frame);
+int id3v2_decode_comment_frame(FILE* input, struct id3v2_frame* frame);
 
 int id3v2_encode_comment_frame(FILE* output, struct id3v2_frame* frame);
 
