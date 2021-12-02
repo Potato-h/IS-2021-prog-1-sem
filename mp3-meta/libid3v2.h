@@ -32,6 +32,8 @@
 // TODO: Should char* contains \0?
 // TODO: Check all offset and member_size
 // TODO: Add return code desription.
+// TODO: Move all doc in one place
+// TODO: Group all functions by their relation to special frame
 
 // Synchsafe 32 bit integer (in this format: 4 * %0xxxxxxx)
 // To understand why it is exist see mp3 format
@@ -257,6 +259,11 @@ int id3v2_encode_tag(FILE* output, struct id3v2_tag* tag);
 // Return error code (0 in success case).
 int id3v2_show_tag(FILE* output, struct id3v2_tag* tag);
 
+// Get prop frame information.
+// Return information from get_prop frame. 
+// Result can be NULL.
+struct id3v2_frame* id3v2_get(struct id3v2_tag* tag, char* prop);
+
 // TODO: Is this right signature? For example, we can set some T*** tag
 // but we need to know (?) encoding to do this. Is encoding is part of value 
 // or there is should be special variable or encoding is always UTF-8 
@@ -264,12 +271,7 @@ int id3v2_show_tag(FILE* output, struct id3v2_tag* tag);
 //
 // Set prop frame to value.
 // Return error code (0 in success case).
-int id3v2_set(struct id3v2_tag* tag, char* prop, char* value);
-
-// Get prop frame information.
-// Return information from get_prop frame. 
-// Result can be NULL.
-char* id3v2_get(struct id3v2_tag* tag, char* prop);
+int id3v2_set(struct id3v2_tag* tag, struct id3v2_frame* frame);
 
 // Deallocate memory for tag and set pointer to NULL.
 // Guarantee correct behaviour, when NULL passed.

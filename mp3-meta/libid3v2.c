@@ -597,6 +597,23 @@ int id3v2_show_tag(FILE* output, struct id3v2_tag* tag) {
     return 0;
 }
 
+// Get prop frame information.
+// Return information from get_prop frame. 
+// Result can be NULL.
+struct id3v2_frame* id3v2_get(struct id3v2_tag* tag, char* id) {
+    struct id3v2_frame* current = tag->frames_head;
+    const size_t id_len = 4;
+
+    while (current) {
+        if (strncmp(current->id, id, id_len) == 0)
+            return current;
+        
+        current++;
+    }
+
+    return NULL;
+}
+
 // TODO: Is this right signature? For example, we can set some T*** tag
 // but we need to know (?) encoding to do this. Is encoding is part of value 
 // or there is should be special variable or encoding is always UTF-8 
@@ -604,12 +621,23 @@ int id3v2_show_tag(FILE* output, struct id3v2_tag* tag) {
 //
 // Set prop frame to value.
 // Return error code (0 in success case).
-int id3v2_set(struct id3v2_tag* tag, char* prop, char* value);
+int id3v2_set(struct id3v2_tag* tag, struct id3v2_frame* frame) {
+    struct id3v2_frame* candidate = id3v2_get(tag, frame->id);
 
-// Get prop frame information.
-// Return information from get_prop frame. 
-// Result can be NULL.
-char* id3v2_get(struct id3v2_tag* tag, char* prop);
+    if (candidate) {
+        // TODO: IT DOESN'T EXIST YET 
+        id3v2_free_frame_content(candidate);
+        memmove(&candidate->size, &frame->size, member_size(struct id3v2_frame, size));
+        memmove(&candidate->flags, &frame->flags, member_size(struct id3v2_frame, flags));
+        memmove(&candidate->content, &frame->content, member_size(struct id3v2_frame, content));
+        return 0;
+    }
+
+    frame->next = tag->frames_head;
+    tag->frames_head = frame;
+
+    return 0;
+}
 
 // Deallocate memory for tag and set pointer to NULL.
 // Guarantee correct behaviour, when NULL passed.

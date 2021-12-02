@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
 
 #ifdef DEBUG
     id3v2_decode_tag(file, &tag);
-    id3v2_show_tag(stdout, tag);
+    id3v2_show_tag(fopen("log.txt", "w"), tag);
     id3v2_free_tag(&tag);
 
     return 0;
@@ -75,30 +75,30 @@ int main(int argc, char* argv[]) {
         goto CLEANUP;
     }
 
-    if (set_prop && set_value) {
-        if (id3v2_set(tag, set_prop, set_value) != 0) {
-            fprintf(stderr, "Failed set property = %s to value = %s\n", set_prop, set_value);
-        }
+    // if (set_prop && set_value) {
+    //     if (id3v2_set(tag, set_prop, set_value) != 0) {
+    //         fprintf(stderr, "Failed set property = %s to value = %s\n", set_prop, set_value);
+    //     }
 
-        if (id3v2_encode_tag(file, tag) != 0) {
-            fprintf(stderr, "Failed write tag into file\n");
-        }
+    //     if (id3v2_encode_tag(file, tag) != 0) {
+    //         fprintf(stderr, "Failed write tag into file\n");
+    //     }
 
-        goto CLEANUP;
-    }
+    //     goto CLEANUP;
+    // }
 
-    if (get_prop) {
-        char* get_val = id3v2_get(tag, get_prop);
+    // if (get_prop) {
+    //     char* get_val = id3v2_get(tag, get_prop);
 
-        if (get_val) {
-            printf("%s\n", get_val);
-        }
-        else {
-            fprintf(stderr, "Property name not found\n");
-        }
+    //     if (get_val) {
+    //         printf("%s\n", get_val);
+    //     }
+    //     else {
+    //         fprintf(stderr, "Property name not found\n");
+    //     }
 
-        goto CLEANUP;
-    }
+    //     goto CLEANUP;
+    // }
 
 CLEANUP:
     fclose(file);
