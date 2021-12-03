@@ -16,7 +16,6 @@
 #define CYAN    "\033[36m"      /* Cyan */
 #define WHITE   "\033[37m"      /* White */
 
-// TODO:
 #define log(format, ...)            fprintf(stderr, "%s(): " format ": %s:%d\n", __func__, ##__VA_ARGS__, __FILE__, __LINE__)
 #define log_warning(format, ...)    fprintf(stderr, YELLOW "%s(): " format ": %s:%d\n" RESET, __func__, ##__VA_ARGS__, __FILE__, __LINE__)
 #define log_error(format, ...)      fprintf(stderr, RED "%s(): " format ": %s:%d\n" RESET, __func__, ##__VA_ARGS__, __FILE__, __LINE__)
@@ -40,6 +39,17 @@ uint32_t id3v2_synchsafe_to_uint32(id3v2_synchsafe32_t synchsafe) {
 
     return byte0 << 21 | byte1 << 14 | byte2 << 7 | byte3;
 }
+
+id3v2_synchsafe32_t id3v2_uint32_to_synchsafe(uint32_t nonsynchsafe) {
+    id3v2_synchsafe32_t synchsafe;
+    synchsafe.inner[3] = nonsynchsafe & 0x7F;
+    synchsafe.inner[2] = (nonsynchsafe >> 7) & 0x7F;
+    synchsafe.inner[1] = (nonsynchsafe >> 14) & 0x7F;
+    synchsafe.inner[0] = (nonsynchsafe >> 21) & 0x7F;
+
+    return synchsafe;
+}
+
 
 // Decode header from input to header. Seek input to header size. 
 // TODO: add ID3 data search
@@ -99,7 +109,7 @@ int id3v2_show_exheader(FILE* output, struct id3v2_exheader* exheader) {
 
 // Free extended header. Set exheader pointer to NULL.
 void id3v2_free_exheader(struct id3v2_exheader** exheader) {
-    if (!*exheader)
+    if (*exheader == NULL)
         return;
 
     fprintf(stderr, YELLOW "unimplemented %s:%d\n" RESET, __FILE__, __LINE__);
@@ -137,9 +147,8 @@ struct id3v2_text_frame_content* id3v2_allocate_text_frame_content(size_t conten
     return content;
 }
 
-// FIXME: Need allocators for each frame content type
 // FIXME: Handle all errors in fread
-// Decode url frame. Seek input to frame size.
+// Decode text frame. Seek input to frame size.
 int id3v2_decode_text_frame(FILE* input, struct id3v2_frame* frame) {
     size_t content_size = id3v2_synchsafe_to_uint32(frame->size);
     frame->content = id3v2_allocate_text_frame_content(content_size); 
@@ -314,9 +323,9 @@ int id3v2_encode_comment_frame(FILE* output, struct id3v2_frame* frame) {
 
     char* buffer = malloc(sizeof(char) * content_size);
     // According to the format, \0 at the end is important
-    strncpy(buffer, content->description, descr_len);
+    strncpy(buffer, content->description, descr_len + 1);
     strncpy(buffer + descr_len + 1, content->text, text_len);
-
+    
     if (fwrite(buffer, sizeof(char), content_size, output) < content_size) {
         log_error("Failed to write content of COMM frame into file");
         return 1;
@@ -416,17 +425,23 @@ int id3v2_show_unsupported_frame(FILE* output, struct id3v2_frame* frame) {
 }
 
 void id3v2_free_unsupported_free_content(void** content) {
+    if (content == NULL)
+        return;
+
     free(*content);
     *content = NULL;
 }
 
 // Decode one frame from input to frame. Seek input to frame size.
+// Return 0 on success.
+// Return 1 on padding.
+// Return 2 on error.
 int id3v2_decode_frame(FILE* input, struct id3v2_frame** frame) {
     static int (*frame_decoders[])(FILE*, struct id3v2_frame*) = {
+        id3v2_decode_unsupported_frame,         // ID3V2_UNSUPPORTED
         id3v2_decode_text_frame,                // ID3V2_TEXT
         id3v2_decode_url_frame,                 // ID3V2_URL
         id3v2_decode_comment_frame,             // ID3V2_COMMENT 
-        id3v2_decode_unsupported_frame,         // ID3V2_UNSUPPORTED
     };
     
     *frame = id3v2_allocate_frame();
@@ -434,11 +449,12 @@ int id3v2_decode_frame(FILE* input, struct id3v2_frame** frame) {
     // Read frame header 
     if (fread(*frame, offsetof(struct id3v2_frame, flags) + member_size(struct id3v2_frame, flags), 1, input) < 1) {
         log_error("Failed to read header of frame from file");
-        return 1;
+        return 2;
     }
 
-    if (strncmp((*frame)->id, "\0\0\0\0", 4) == 0) {
+    if (strncmp((*frame)->id, "\0\0\0\0", ID3V2_ID_LEN) == 0) {
         // Padding has been detected
+        id3v2_free_frame(frame);
         return 1;
     }
 
@@ -454,10 +470,10 @@ int id3v2_decode_frame(FILE* input, struct id3v2_frame** frame) {
 // Encode generic frame into output.
 int id3v2_encode_frame(FILE* output, struct id3v2_frame* frame) {
     static int (*frame_encoders[])(FILE* output, struct id3v2_frame*) = {
+        id3v2_encode_unsupported_frame,         // ID3V2_UNSUPPORTED
         id3v2_encode_text_frame,                // ID3V2_TEXT
         id3v2_encode_url_frame,                 // ID3V2_URL
         id3v2_encode_comment_frame,             // ID3V2_COMMENT
-        id3v2_encode_unsupported_frame,         // ID3V2_UNSUPPORTED
     };
     
     // Write frame header
@@ -478,10 +494,10 @@ int id3v2_encode_frame(FILE* output, struct id3v2_frame* frame) {
 // Print generic frame data in human readble format into output.
 int id3v2_show_frame(FILE* output, struct id3v2_frame* frame) {
     static int (*frame_printers[])(FILE*, struct id3v2_frame*) = {
+        id3v2_show_unsupported_frame,           // ID3V2_UNSUPPORTED
         id3v2_show_text_frame,                  // ID3V2_TEXT
         id3v2_show_url_frame,                   // ID3V2_URL
         id3v2_show_comment_frame,               // ID3V2_COMMENT
-        id3v2_show_unsupported_frame,           // ID3V2_UNSUPPORTED
     };
 
     enum id3v2_frame_type type = id3v2_get_frame_type(frame->id);
@@ -496,15 +512,18 @@ int id3v2_show_frame(FILE* output, struct id3v2_frame* frame) {
 // Free frame. Set frame pointer to NULL.
 void id3v2_free_frame(struct id3v2_frame** frame) {
     static void (*content_destructors[])(void**) = {
+        id3v2_free_unsupported_free_content,    // ID3V2_UNSUPPORTED
         id3v2_free_text_frame_content,          // ID3V2_TEXT
         id3v2_free_url_frame_content,           // ID3V2_URL
         id3v2_free_comment_frame_content,       // ID3V2_COMMENT
-        id3v2_free_unsupported_free_content,    // ID3V2_UNSUPPORTED
     };
 
     enum id3v2_frame_type type = id3v2_get_frame_type((*frame)->id);
 
-    content_destructors[type](&(*frame)->content);    
+    if ((*frame)->content) {
+        content_destructors[type](&(*frame)->content);    
+    }
+
     free(*frame);
     *frame = NULL;
 }
@@ -520,6 +539,8 @@ int id3v2_decode_tag(FILE* input, struct id3v2_tag** tag) {
         return 1;
     }
 
+    (*tag)->exheader = NULL;
+
     if ((*tag)->header.flags & EXHEADER) {
         if (id3v2_decode_exheader(input, &(*tag)->exheader) != 0) {
             log_error("Failed to decode extended header");
@@ -533,9 +554,16 @@ int id3v2_decode_tag(FILE* input, struct id3v2_tag** tag) {
 
     // TODO: Check validity of while condition    
     while (frames_size < tag_size) {
-        if (id3v2_decode_frame(input, current_frame) != 0) {
+        int rc = id3v2_decode_frame(input, current_frame);
+        
+        // If something happend, that was worse than padding
+        if (rc > 1) {
             log_error("Failed to decode frame");
             return 1;
+        }
+
+        if (rc == 1) {
+            return 0;
         }
 
         frames_size += id3v2_synchsafe_to_uint32((*current_frame)->size);
@@ -602,46 +630,17 @@ int id3v2_show_tag(FILE* output, struct id3v2_tag* tag) {
     return 0;
 }
 
-// Get prop frame information.
-// Return information from get_prop frame. 
+// Find first frame with given id. 
 // Result can be NULL.
-struct id3v2_frame* id3v2_get(struct id3v2_tag* tag, char* id) {
-    struct id3v2_frame* current = tag->frames_head;
-    const size_t id_len = 4;
-
-    while (current) {
-        if (strncmp(current->id, id, id_len) == 0)
-            return current;
+struct id3v2_frame* id3v2_find_first(struct id3v2_frame* from, char* id) {
+    while (from) {
+        if (strncmp(from->id, id, ID3V2_ID_LEN) == 0)
+            return from;
         
-        current++;
+        from = from->next;
     }
 
     return NULL;
-}
-
-// TODO: Is this right signature? For example, we can set some T*** tag
-// but we need to know (?) encoding to do this. Is encoding is part of value 
-// or there is should be special variable or encoding is always UTF-8 
-// (which will be very strange). 
-//
-// Set prop frame to value.
-// Return error code (0 in success case).
-int id3v2_set(struct id3v2_tag* tag, struct id3v2_frame* frame) {
-    struct id3v2_frame* candidate = id3v2_get(tag, frame->id);
-
-    if (candidate) {
-        // TODO: IT DOESN'T EXIST YET 
-        // id3v2_free_frame_content(candidate);
-        memmove(&candidate->size, &frame->size, member_size(struct id3v2_frame, size));
-        memmove(&candidate->flags, &frame->flags, member_size(struct id3v2_frame, flags));
-        memmove(&candidate->content, &frame->content, member_size(struct id3v2_frame, content));
-        return 0;
-    }
-
-    frame->next = tag->frames_head;
-    tag->frames_head = frame;
-
-    return 0;
 }
 
 // Deallocate memory for tag and set pointer to NULL.

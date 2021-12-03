@@ -14,6 +14,8 @@
 #define EXPERIMENT  0b00100000
 #define FOOTER      0b00010000
 
+#define ID3V2_ID_LEN 4
+
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
 #define BYTE_TO_BINARY(byte)  \
   (byte & 0x80 ? '1' : '0'), \
@@ -42,6 +44,8 @@ typedef struct id3v2_synchsafe32_t {
 } id3v2_synchsafe32_t;
 
 uint32_t id3v2_synchsafe_to_uint32(id3v2_synchsafe32_t synchsafe);
+
+id3v2_synchsafe32_t id3v2_uint32_to_synchsafe(uint32_t nonsynchsafe);
 
 // TODO: make union from version or replace it with separate 
 // major and revision fields
@@ -102,7 +106,7 @@ void id3v2_free_exheader(struct id3v2_exheader** exheader);
 // Constranins: content ptr should always hold memory allocated 
 // by malloc for correct free call.
 struct id3v2_frame {
-    char id[4];                 // Frame ID in following format: $xx xx xx xx
+    char id[ID3V2_ID_LEN];      // Frame ID in following format: $xx xx xx xx
 
     id3v2_synchsafe32_t size;   // Size as synchsafe 32 bit integer.
 
@@ -117,10 +121,10 @@ struct id3v2_frame {
 
 // All uses in function table MUST have same order
 enum id3v2_frame_type {
+    ID3V2_UNSUPPORTED,
     ID3V2_TEXT,
     ID3V2_URL,
     ID3V2_COMMENT,
-    ID3V2_UNSUPPORTED,
 };
 
 enum id3v2_encoding {
@@ -259,19 +263,9 @@ int id3v2_encode_tag(FILE* output, struct id3v2_tag* tag);
 // Return error code (0 in success case).
 int id3v2_show_tag(FILE* output, struct id3v2_tag* tag);
 
-// Get prop frame information.
-// Return information from get_prop frame. 
+// Find first frame with given id. 
 // Result can be NULL.
-struct id3v2_frame* id3v2_get(struct id3v2_tag* tag, char* prop);
-
-// TODO: Is this right signature? For example, we can set some T*** tag
-// but we need to know (?) encoding to do this. Is encoding is part of value 
-// or there is should be special variable or encoding is always UTF-8 
-// (which will be very strange). 
-//
-// Set prop frame to value.
-// Return error code (0 in success case).
-int id3v2_set(struct id3v2_tag* tag, struct id3v2_frame* frame);
+struct id3v2_frame* id3v2_find_first(struct id3v2_frame* from, char* id);
 
 // Deallocate memory for tag and set pointer to NULL.
 // Guarantee correct behaviour, when NULL passed.
