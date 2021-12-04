@@ -55,15 +55,15 @@ void rewrite_mp3(struct id3v2_tag* tag, FILE* from_mp3) {
     id3v2_encode_tag(tmp, tag);
     char c; 
 
-    while ((c = fgetc(from_mp3)) != EOF) {
-        fputc(c, tmp);
+    while (fread(&c, 1, 1, from_mp3) == 1) {
+        fwrite(&c, 1, 1, tmp);
     }
 
     fseek(from_mp3, 0, SEEK_SET);
     fseek(tmp, 0, SEEK_SET);
 
-    while ((c = fgetc(tmp)) != EOF) {
-        fputc(c, from_mp3);
+    while (fread(&c, 1, 1, tmp) == 1) {
+        fwrite(&c, 1, 1, from_mp3);
     }
 
     fclose(tmp);
@@ -179,6 +179,7 @@ int main(int argc, char* argv[]) {
         tag->header.size = id3v2_uint32_to_synchsafe(
             id3v2_synchsafe_to_uint32(tag->header.size)
             + id3v2_synchsafe_to_uint32(value->size)
+            + 10
         );
 
         rewrite_mp3(tag, file);

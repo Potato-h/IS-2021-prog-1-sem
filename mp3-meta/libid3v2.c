@@ -396,7 +396,7 @@ int id3v2_decode_unsupported_frame(FILE* input, struct id3v2_frame* frame) {
 // Encode unsupported frame into output.
 int id3v2_encode_unsupported_frame(FILE* output, struct id3v2_frame* frame) {
     size_t content_size = id3v2_synchsafe_to_uint32(frame->size);
-    
+
     if (fwrite(frame->content, sizeof(char), content_size, output) < content_size) {
         log_error("Failed to write unsupported frame content");
         return 1;
@@ -446,14 +446,18 @@ int id3v2_decode_frame(FILE* input, struct id3v2_frame** frame) {
     
     *frame = id3v2_allocate_frame();
 
+    size_t head_size = offsetof(struct id3v2_frame, flags) 
+                + member_size(struct id3v2_frame, flags);
+
     // Read frame header 
-    if (fread(*frame, offsetof(struct id3v2_frame, flags) + member_size(struct id3v2_frame, flags), 1, input) < 1) {
+    if (fread(*frame, head_size, 1, input) < 1) {
         log_error("Failed to read header of frame from file");
         return 2;
     }
 
     if (strncmp((*frame)->id, "\0\0\0\0", ID3V2_ID_LEN) == 0) {
         // Padding has been detected
+        fseek(input, -head_size, SEEK_CUR);
         id3v2_free_frame(frame);
         return 1;
     }
@@ -463,6 +467,7 @@ int id3v2_decode_frame(FILE* input, struct id3v2_frame** frame) {
     if (type == ID3V2_UNSUPPORTED) {
         log_warning("Try decode unsupported type frame (%.4s)", (*frame)->id);
     }
+
 
     return frame_decoders[type](input, *frame);
 }
