@@ -5,6 +5,8 @@
 
 //#define DEBUG 
 
+#define BUF_SIZE (1 << 20)
+
 #define SET_ARG         "--set="
 #define VALUE_ARG       "--value="
 #define GET_ARG         "--get="
@@ -53,17 +55,18 @@ struct id3v2_frame* comment_frame_converter(const char* id, const char* str) {
 void rewrite_mp3(struct id3v2_tag* tag, FILE* from_mp3) {
     FILE* tmp = tmpfile();
     id3v2_encode_tag(tmp, tag);
-    char c; 
+    char buffer[BUF_SIZE]; 
+    size_t read;
 
-    while (fread(&c, 1, 1, from_mp3) == 1) {
-        fwrite(&c, 1, 1, tmp);
+    while ((read = fread(buffer, sizeof(char), sizeof(buffer), from_mp3)) != 0) {
+        fwrite(buffer, sizeof(char), read, tmp);
     }
 
     fseek(from_mp3, 0, SEEK_SET);
     fseek(tmp, 0, SEEK_SET);
 
-    while (fread(&c, 1, 1, tmp) == 1) {
-        fwrite(&c, 1, 1, from_mp3);
+    while ((read = fread(buffer, sizeof(char), sizeof(buffer), tmp)) != 0) {
+        fwrite(buffer, sizeof(char), read, from_mp3);
     }
 
     fclose(tmp);
