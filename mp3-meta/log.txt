@@ -1,0 +1,406 @@
+id: ID3
+major: 4, minor: 0
+flags: 0b10000000
+size: 46389
+id: TALB
+size: 11
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Album
+id: TPE1
+size: 12
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Artist
+id: TPE2
+size: 18
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Album Artist
+id: TBPM
+size: 3
+flags: 0b00000000 0b00000000
+encoding: ISO
+content: 96
+id: COMM
+size: 18
+flags: 0b00000000 0b00000000
+encoding: UTF8
+language: eng
+description: 
+text: Test Comments
+id: COMM
+size: 20
+flags: 0b00000000 0b00000000
+encoding: UTF8
+language: eng
+description: 2
+text: Test Comment 2
+id: COMM
+size: 28
+flags: 0b00000000 0b00000000
+encoding: UTF8
+language: eng
+description: Catalog Number
+text: 123456789
+id: COMM
+size: 68
+flags: 0b00000000 0b00000000
+encoding: UTF8
+language: eng
+description: Media Jukebox: Encoder
+text: LAME 3.98.4 -V5 (Dbpoweramp Release 13.4)
+id: COMM
+size: 51
+flags: 0b00000000 0b00000000
+encoding: UTF8
+language: eng
+description: Media Jukebox: Tool Name
+text: J. River Media Jukebox
+id: COMM
+size: 39
+flags: 0b00000000 0b00000000
+encoding: UTF8
+language: eng
+description: Media Jukebox: Tool Version
+text: 12.0.30
+id: COMM
+size: 41
+flags: 0b00000000 0b00000000
+encoding: UTF8
+language: eng
+description: MusicMatch_Preference
+text: Test Preference
+id: COMM
+size: 39
+flags: 0b00000000 0b00000000
+encoding: UTF8
+language: eng
+description: MusicMatch_Situation
+text: Test Situation
+id: COMM
+size: 31
+flags: 0b00000000 0b00000000
+encoding: UTF8
+language: eng
+description: MusicMatch_Tempo
+text: Test Tempo
+id: COMM
+size: 38
+flags: 0b00000000 0b00000000
+encoding: UTF8
+language: eng
+description: Songs-DB_Preference
+text: Very good copy
+id: TCOM
+size: 14
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Composer
+id: TPE3
+size: 15
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Conductor
+id: TIT1
+size: 14
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Grouping
+id: TCOP
+size: 15
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Copyright
+id: TPOS
+size: 4
+flags: 0b00000000 0b00000000
+encoding: ISO
+content: 3/4
+id: TENC
+size: 24
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Dbpoweramp Release 13.4
+id: TSSE
+size: 16
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Lame 3.98.4 -V5
+id: TSST
+size: 20
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Album Subtitle
+id: TOWN
+size: 16
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test File Owner
+id: TCON
+size: 10
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Classical
+id: TIPL
+size: 47
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Ankka
+id: TCMP
+size: 3
+flags: 0b00000000 0b00000000
+encoding: ISO
+content: 1
+id: TSRC
+size: 8
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Isrc000
+id: TLAN
+size: 8
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Finnish
+id: TEXT
+size: 14
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Lyricist
+id: TMED
+size: 34
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: CD (Analogue Transfer From Media)
+id: TPE4
+size: 11
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Remix
+id: TMOO
+size: 10
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Hilarious
+id: TMCL
+size: 49
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Pasuuna
+id: TOAL
+size: 17
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Orig. Title
+id: TOPE
+size: 18
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Orig. Artist
+id: TOFN
+size: 20
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Orig. Filename
+id: TOLY
+size: 20
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Orig. Lyricist
+id: TDOR
+size: 11
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: 1979-11-24
+id: POPM
+size: 22
+flags: 0b00000000 0b00000000
+Unknow content: Helium Music Manager
+id: TPUB
+size: 15
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Publisher
+id: TDRL
+size: 11
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: 2010-01-30
+id: TIT3
+size: 14
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Subtitle
+id: TIT2
+size: 10
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Name
+id: TRCK
+size: 5
+flags: 0b00000000 0b00000000
+encoding: ISO
+content: 7/16
+id: USLT
+size: 170
+flags: 0b00000000 0b00000000
+Unknow content: ENGUnsynchronized Lyrics
+id: TDRC
+size: 11
+flags: 0b00000000 0b00000000
+encoding: ISO
+content: 2008-12-29
+id: WOAR
+size: 26
+flags: 0b00000000 0b00000000
+content: http://www.test.url/artist
+id: WOAF
+size: 30
+flags: 0b00000000 0b00000000
+content: http://www.test.url/audio_file
+id: WCOM
+size: 26
+flags: 0b00000000 0b00000000
+content: http://www.test.url/buy_cd
+id: WPUB
+size: 29
+flags: 0b00000000 0b00000000
+content: http://www.test.url/publisher
+id: WORS
+size: 25
+flags: 0b00000000 0b00000000
+content: http://www.test.url/radio
+id: TSOA
+size: 22
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Album Sort Order
+id: TSOP
+size: 23
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Artist Sort Order
+id: TSOT
+size: 22
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Title Sort Order
+id: TSO2
+size: 25
+flags: 0b00000000 0b00000000
+encoding: UTF8
+content: Test Alb.Art. Sort Order
+id: TXXX
+size: 57
+flags: 0b00000000 0b00000000
+Unknow content: #Helium Album Artist Sort Order
+id: TXXX
+size: 29
+flags: 0b00000000 0b00000000
+Unknow content: #Helium Comment
+id: TXXX
+size: 37
+flags: 0b00000000 0b00000000
+Unknow content: #Helium Custom Field 1
+id: TXXX
+size: 37
+flags: 0b00000000 0b00000000
+Unknow content: #Helium Custom Field 2
+id: TXXX
+size: 37
+flags: 0b00000000 0b00000000
+Unknow content: #Helium Custom Field 3
+id: TXXX
+size: 37
+flags: 0b00000000 0b00000000
+Unknow content: #Helium Custom Field 4
+id: TXXX
+size: 37
+flags: 0b00000000 0b00000000
+Unknow content: #Helium Custom Field 5
+id: TXXX
+size: 19
+flags: 0b00000000 0b00000000
+Unknow content: #Helium Obscure
+id: TXXX
+size: 39
+flags: 0b00000000 0b00000000
+Unknow content: #Helium2 AlbumArtist
+id: TXXX
+size: 42
+flags: 0b00000000 0b00000000
+Unknow content: #Helium2 PartOfSeries
+id: TXXX
+size: 23
+flags: 0b00000000 0b00000000
+Unknow content: #Helium2 ReleaseType
+id: TXXX
+size: 33
+flags: 0b00000000 0b00000000
+Unknow content: ALBUM ARTIST
+id: TXXX
+size: 99
+flags: 0b00000000 0b00000000
+Unknow content: iTunNORM
+id: TXXX
+size: 125
+flags: 0b00000000 0b00000000
+Unknow content: iTunSMPB
+id: TXXX
+size: 36
+flags: 0b00000000 0b00000000
+Unknow content: No-Clip Adjusted
+id: TXXX
+size: 20
+flags: 0b00000000 0b00000000
+Unknow content: PEAK LEVEL
+id: TXXX
+size: 19
+flags: 0b00000000 0b00000000
+Unknow content: PERFORMER
+id: TXXX
+size: 17
+flags: 0b00000000 0b00000000
+Unknow content: REPLAY GAIN
+id: TXXX
+size: 31
+flags: 0b00000000 0b00000000
+Unknow content: replaygain_album_gain
+id: TXXX
+size: 31
+flags: 0b00000000 0b00000000
+Unknow content: replaygain_album_peak
+id: TXXX
+size: 31
+flags: 0b00000000 0b00000000
+Unknow content: replaygain_track_gain
+id: TXXX
+size: 31
+flags: 0b00000000 0b00000000
+Unknow content: replaygain_track_peak
+id: APIC
+size: 4811
+flags: 0b00000000 0b00000011
+Unknow content: 
+id: APIC
+size: 16060
+flags: 0b00000000 0b00000011
+Unknow content: 
+id: APIC
+size: 20529
+flags: 0b00000000 0b00000011
+Unknow content: 
+id: TSTU
+size: 30
+flags: 0b00000000 0b00000011
+encoding: ISO
+content: 
+id: TPRO
+size: 34
+flags: 0b00000000 0b00000011
+encoding: ISO
+content: 
+id: 
+size: 0
+flags: 0b00000000 0b00000000
+Unknow content: 
