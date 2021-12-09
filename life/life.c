@@ -3,11 +3,15 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "libbmp.h"
+#include "liblife.h"
+
 #define INPUT_ARG           "--input"
 #define OUTPUT_ARG          "--output"
 #define MAX_ITER_ARG        "--max_iter"
 #define DUMP_FREQ_ARG       "--dump_freq"
 
+// There is some problem with label mark
 int main(int argc, char* argv[]) {
     FILE*       input       = NULL;
     char*       output_dir  = NULL;
@@ -62,6 +66,21 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+
+    struct life_config config = {
+        .start = NULL,
+        .out_dir = output_dir,
+        .max_iter = max_iter,
+        .dump_freq = dump_freq
+    };
+
+    struct life_game* game;
+
+    life_game_init(&config, &game);
+
+    while (life_game_step(game) == 0);
+
+    life_free_game(&game);
 
 CLEANUP:
     if (input) {
