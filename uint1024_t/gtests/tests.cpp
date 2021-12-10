@@ -40,6 +40,24 @@ TEST (uint1024_t, add) {
     }
 }
 
+TEST (uint1024_t, subtract) {
+    std::map<std::pair<const char*, const char*>, const char*> tests = {
+        { { "713781723881381723", "139183091832" }, "713781584698289891" },
+        { { "12738917293871238712", "9130918293081938" }, "12729786375578156774" },
+        { { "9183091832098120938109381238", "1203102930193123" }, "9183091832096917835179188115" },
+        { { "8138917239871293871387198739817398173981273987123", "913891391839183291832" }, "8138917239871293871387198738903506782142090695291" }
+    };
+
+    for (auto test : tests) {
+        auto input = test.first;
+        uint1024_t x = stoi(input.first);
+        uint1024_t y = stoi(input.second);
+        uint1024_t res = subtr_op(x, y);
+        char* obtained = itos(res);
+        EXPECT_EQ(std::string(test.second), std::string(obtained));
+    }
+}
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
