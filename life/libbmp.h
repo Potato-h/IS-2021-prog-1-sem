@@ -45,16 +45,16 @@ struct bmp_image {
     uint8_t**               bitmap;
 };
 
-// Parse from file
+// Parse from file.
 int bmp_decode_image(FILE* input, struct bmp_image** image);
 
-// Put bmp into file
+// Put bmp into file.
 int bmp_encode_image(FILE* output, struct bmp_image* image);
 
-// Get byte of bitmap in given position
+// Get byte of bitmap in given position. Doesn't check range.
 uint8_t bmp_get_pixel(struct bmp_image* image, uint32_t line, uint32_t column);
 
-// Set byte of bitmap in given position
+// Set byte of bitmap in given position. Doesn't check range.
 void bmp_set_pixel(struct bmp_image* image, uint32_t row, uint32_t column, uint8_t pixel);
 
 // Copy given image and allocate memory for it. So, bmp_free_image
