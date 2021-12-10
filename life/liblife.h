@@ -1,4 +1,8 @@
+#ifndef LIBLIFE_HEADER
+#define LIBLIFE_HEADER
+
 #include "libbmp.h"
+#include <stdint.h>
 
 struct life_config {
     struct bmp_image*   start;
@@ -20,3 +24,5 @@ void life_game_init(struct life_config* config, struct life_game** game);
 int life_game_step(struct life_game* game);
 
 void life_free_game(struct life_game** game);
+
+#endif

@@ -36,8 +36,8 @@ int bmp_encode_image(FILE* output, struct bmp_image* image) {
 
     // Something with color table
 
-    uint32_t height = (*image)->bmih.height;
-    uint32_t width = (*image)->bmih.width;
+    uint32_t height = image->bmih.height;
+    uint32_t width = image->bmih.width;
     
     for (size_t i = 0; i < height; i++) {
         fwrite(image->bitmap[i], sizeof(char), width, output);
