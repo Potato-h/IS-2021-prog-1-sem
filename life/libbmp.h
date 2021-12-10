@@ -42,7 +42,7 @@ struct bmp_image {
     struct bmp_file_header  bmfh;
     struct bmp_info_header  bmih;
     struct bmp_rgbquad*     colors;
-    char**                  bitmap;
+    uint8_t**                  bitmap;
 };
 
 // Parse from file
@@ -52,7 +52,10 @@ int bmp_decode_image(FILE* input, struct bmp_image** image);
 int bmp_encode_image(FILE* output, struct bmp_image* image);
 
 // Get byte of bitmap in given position
-char* bmp_pixel(struct bmp_image* image, uint32_t line, uint32_t column);
+uint8_t bmp_get_pixel(struct bmp_image* image, uint32_t line, uint32_t column);
+
+// Set byte of bitmap in given position
+void bmp_set_pixel(struct bmp_image* image, uint32_t row, uint32_t column, uint8_t pixel);
 
 // Free all memory allocated from decode function. Set image to NULL on success.
 void bmp_free_image(struct bmp_image** image);

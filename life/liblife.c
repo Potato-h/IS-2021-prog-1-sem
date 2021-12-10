@@ -26,6 +26,13 @@ void life_game_init(struct life_config* config, struct life_game** game) {
     (*game)->step = 0;
     (*game)->state = config->start;
     (*game)->config = *config;
+
+    if (config->start) {
+        // TODO: copy picture
+        (*game)->state = config->start;
+    } else {
+        // random picture
+    }
 }
 
 int life_game_step(struct life_game* game) {

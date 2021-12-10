@@ -67,15 +67,21 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    struct bmp_image* start = NULL;
+
+    if (input) {
+        bmp_decode_image(input, &start);
+    }
+
     struct life_config config = {
-        .start = NULL,
+        .start = start,
         .out_dir = output_dir,
         .max_iter = max_iter,
         .dump_freq = dump_freq
     };
 
     struct life_game* game;
-    
+
     life_game_init(&config, &game);
 
     while (life_game_step(game) == 0);
