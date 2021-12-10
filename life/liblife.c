@@ -24,28 +24,60 @@ void life_game_init(struct life_config* config, struct life_game** game) {
     
     // TODO: Just copy whole config
     (*game)->step = 0;
-    (*game)->state = config->start;
     (*game)->config = *config;
 
     if (config->start) {
-        // TODO: copy picture
-        (*game)->state = config->start;
+        (*game)->state = bmp_copy_image(config->start);
     } else {
-        // random picture
+        // TODO: random picture
     }
 }
 
 int life_game_step(struct life_game* game) {
     if (game->step == game->config.max_iter) {
-        // All iterations were done
+        log("All iteration done");
         return 1;
     }
 
     game->step++;
     
-    // TODO: Create new bmp structure and replace status with it after calc.
-    
-    // After state update
+    struct bmp_image* next = bmp_copy_image(game->state);
+
+    for (size_t i = 0; i < next->bmih.height; i++) {
+        for (size_t j = 0; j < next->bmih.width; j++) {
+            uint8_t neibo = 0; 
+            uint8_t alive = bmp_get_pixel(game->state, i, j);
+
+            for (int32_t di = -1; di <= 1; di++) {
+                for (int32_t dj = -1; dj <= 1; dj++) {
+                    if ((di != 0 || dj != 0) 
+                    && 0 <= i + di && i + di < next->bmih.height
+                    && 0 <= j + dj && j + dj < next->bmih.width
+                    ) {
+                        neibo += bmp_get_pixel(game->state, i + di, j + dj);
+                    } 
+                }
+            }
+
+            if (alive && (neibo < 2 || neibo > 3)) {
+                // Alive cell dies by under or over population
+                bmp_set_pixel(next, i, j, 0);
+                continue;
+            }
+
+            if (!alive && neibo == 3) {
+                // Dead cell becomes alive cell by reprodaction
+                bmp_set_pixel(next, i, j, 1);
+                continue;
+            }
+        }
+    }
+
+    // Replace old state by new calculated
+    free(game->state);
+    game->state = next;
+
+    // Upload image of new state in output directory
     if (game->step % game->config.dump_freq == 0) {
         FILE* file = NULL;
         char filepath[200];
