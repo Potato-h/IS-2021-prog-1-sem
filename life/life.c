@@ -39,7 +39,8 @@ int main(int argc, char* argv[]) {
                 goto CLEANUP;
             }
 
-            char* output_dir = argv[i + 1];
+            // FIXME: create out dir, if it doesn't exist
+            output_dir = argv[i + 1];
         }
 
         if (strcmp(argv[i], MAX_ITER_ARG) == 0) {

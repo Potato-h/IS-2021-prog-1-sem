@@ -34,7 +34,7 @@ void life_game_init(struct life_config* config, struct life_game** game) {
 }
 
 int life_game_step(struct life_game* game) {
-    if (game->step == game->config.max_iter) {
+    if (game->config.max_iter != 0 && game->step == game->config.max_iter) {
         log("All iteration done");
         return 1;
     }
@@ -85,7 +85,7 @@ int life_game_step(struct life_game* game) {
         
         filename[0] = '\0';
         sprintf(filename, "/%d.bmp", game->step);
-        strcat(filepath, game->config.out_dir);
+        strcpy(filepath, game->config.out_dir);
         strcat(filepath, filename);
 
         if (!(file = fopen(filepath, "wb+"))) {

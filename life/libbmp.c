@@ -69,6 +69,9 @@ int bmp_encode_image(FILE* output, struct bmp_image* image) {
     uint32_t height = image->bmih.height;
     uint32_t width = image->bmih.width;
     
+    // skip color table
+    fseek(output, image->bmfh.off_bits, SEEK_SET);
+
     for (size_t i = 0; i < height; i++) {
         fwrite(image->bitmap[i], sizeof(uint8_t), width, output);
     }
@@ -79,14 +82,14 @@ int bmp_encode_image(FILE* output, struct bmp_image* image) {
 // FIXME: function hardcoded to work with 1-bit pixel
 // See description in libbmp.h
 uint8_t bmp_get_pixel(struct bmp_image* image, uint32_t row, uint32_t column) {
-    uint8_t byte = image->bitmap[image->bmih.height - row][column / 8];
+    uint8_t byte = image->bitmap[image->bmih.height - row - 1][column / 8];
     return (byte >> (column % 8)) & 1;
 }
 
 // FIXME: function hardcoded to work with 1-bit pixel
 // See description in libbmp.h
 void bmp_set_pixel(struct bmp_image* image, uint32_t row, uint32_t column, uint8_t pixel) {
-    uint8_t* byte = &image->bitmap[image->bmih.height - row][column / 8];
+    uint8_t* byte = &image->bitmap[image->bmih.height - row - 1][column / 8];
     *byte ^= (-pixel ^ *byte) & (1UL << (column % 8));
 }
 
