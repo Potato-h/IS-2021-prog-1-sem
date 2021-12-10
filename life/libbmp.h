@@ -42,7 +42,7 @@ struct bmp_image {
     struct bmp_file_header  bmfh;
     struct bmp_info_header  bmih;
     struct bmp_rgbquad*     colors;
-    uint8_t**                  bitmap;
+    uint8_t**               bitmap;
 };
 
 // Parse from file
@@ -56,6 +56,10 @@ uint8_t bmp_get_pixel(struct bmp_image* image, uint32_t line, uint32_t column);
 
 // Set byte of bitmap in given position
 void bmp_set_pixel(struct bmp_image* image, uint32_t row, uint32_t column, uint8_t pixel);
+
+// Copy given image and allocate memory for it. So, bmp_free_image
+// call at the end is needed.
+struct bmp_image* bmp_copy_image(struct bmp_image* image);
 
 // Free all memory allocated from decode function. Set image to NULL on success.
 void bmp_free_image(struct bmp_image** image);

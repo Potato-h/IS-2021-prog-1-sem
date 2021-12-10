@@ -1,5 +1,6 @@
 #include "libbmp.h"
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
 // TODO: rewrite all logs and erros
@@ -87,6 +88,31 @@ uint8_t bmp_get_pixel(struct bmp_image* image, uint32_t row, uint32_t column) {
 void bmp_set_pixel(struct bmp_image* image, uint32_t row, uint32_t column, uint8_t pixel) {
     uint8_t* byte = &image->bitmap[image->bmih.height - row][column / 8];
     *byte ^= (-pixel ^ *byte) & (1UL << (column % 8));
+}
+
+// See description in libbmp.h
+struct bmp_image* bmp_copy_image(struct bmp_image* image) {
+    struct bmp_image* copy = malloc(sizeof(struct bmp_image));
+
+    memcpy(&copy->bmfh, &image->bmfh, sizeof(image->bmfh));
+    memcpy(&copy->bmih, &image->bmih, sizeof(image->bmih));
+    // copy color table
+
+    uint32_t height = image->bmih.height;
+    uint32_t width = image->bmih.width;
+
+    // width is provided in pixel and we assume, that image is 1-bit colored
+    uint32_t width_bytes = (sizeof(uint8_t) * width + 7) / 8;
+    // bmp format want to have number of bytes in a row reaches a multiple of four
+    width_bytes += 4 - (width_bytes % 4);
+    copy->bitmap = malloc(sizeof(uint8_t*) * height);
+
+    for (size_t i = 0; i < height; i++) {
+        copy->bitmap[i] = malloc(sizeof(uint8_t) * width_bytes);
+        memcpy(copy->bitmap[i], image->bitmap[i], sizeof(uint8_t) * width_bytes);
+    }
+
+    return copy;
 }
 
 // See description in libbmp.h
