@@ -46,7 +46,7 @@ int life_game_step(struct life_game* game) {
     for (size_t i = 0; i < next->bmih.height; i++) {
         for (size_t j = 0; j < next->bmih.width; j++) {
             uint8_t neibo = 0; 
-            uint8_t alive = bmp_get_pixel(game->state, i, j);
+            uint8_t alive = bmp_get_pixel(game->state, i, j) == 0;
 
             for (int32_t di = -1; di <= 1; di++) {
                 for (int32_t dj = -1; dj <= 1; dj++) {
@@ -54,20 +54,20 @@ int life_game_step(struct life_game* game) {
                     && 0 <= i + di && i + di < next->bmih.height
                     && 0 <= j + dj && j + dj < next->bmih.width
                     ) {
-                        neibo += bmp_get_pixel(game->state, i + di, j + dj);
+                        neibo += bmp_get_pixel(game->state, i + di, j + dj) == 0;
                     } 
                 }
             }
 
             if (alive && (neibo < 2 || neibo > 3)) {
                 // Alive cell dies by under or over population
-                bmp_set_pixel(next, i, j, 0);
+                bmp_set_pixel(next, i, j, 1);
                 continue;
             }
 
             if (!alive && neibo == 3) {
                 // Dead cell becomes alive cell by reprodaction
-                bmp_set_pixel(next, i, j, 1);
+                bmp_set_pixel(next, i, j, 0);
                 continue;
             }
         }
