@@ -93,6 +93,14 @@ int main(int argc, char* argv[]) {
         .dump_freq = dump_freq
     };
 
+    if (config.max_iter == 0) {
+        printf("Are you sure, that you want infite game? [y/n]\n");
+
+        if (getchar() != 'y') {
+            goto CLEANUP;
+        }
+    }
+
     struct life_game* game;
 
     life_game_init(&config, &game);
