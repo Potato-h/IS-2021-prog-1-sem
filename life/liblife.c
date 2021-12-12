@@ -92,8 +92,11 @@ int life_game_step(struct life_game* game) {
 
         if (bmp_encode_image(file, game->state) != 0) {
             log_error("Couldn't encode current state of game into file\n");
+            fclose(file);
             return -1;
         }
+
+        fclose(file);
     }
 
     return 0;
