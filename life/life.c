@@ -11,6 +11,18 @@
 #define MAX_ITER_ARG        "--max_iter"
 #define DUMP_FREQ_ARG       "--dump_freq"
 
+// Cross platform way to create directory
+#if defined(WIN32) || defined(__WIN32) || defined(__WIN32__)
+#include <windows.h>
+
+#define mkdir(dir, mode) _mkdir(dir)
+#endif
+
+#if defined(__linux__)
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
+
 // There is some problem with label mark
 int main(int argc, char* argv[]) {
     FILE*       input       = NULL;
@@ -39,8 +51,8 @@ int main(int argc, char* argv[]) {
                 goto CLEANUP;
             }
 
-            // FIXME: create out dir, if it doesn't exist
             output_dir = argv[i + 1];
+            mkdir(output_dir, 0700);
         }
 
         if (strcmp(argv[i], MAX_ITER_ARG) == 0) {
