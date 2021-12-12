@@ -8,7 +8,6 @@
 #include <endian.h>
 
 // TODO: rewrite all logs and erros
-// TODO: make solution independent in terms of endianness
 // TODO: all magic constants MUST BE erased
 
 uint32_t bmp_pixels_to_bytes(uint32_t width) {
@@ -27,13 +26,22 @@ int bmp_decode_image(FILE* input, struct bmp_image** _image) {
     fread(&image->bmfh, sizeof(struct bmp_file_header), 1, input);
     fread(&image->bmih, sizeof(struct bmp_info_header), 1, input);
 
-    image->bmfh.off_bits     = le32toh(image->bmfh.off_bits);
-    image->bmfh.size         = le32toh(image->bmfh.size);
+    // bmp format is little endian
+    image->bmfh.size            = le32toh(image->bmfh.size);
+    image->bmfh.off_bits        = le32toh(image->bmfh.off_bits);
 
-    // FIXME: fix endianness for other fields
-    image->bmih.height       = le32toh(image->bmih.height);
-    image->bmih.width        = le32toh(image->bmih.width);
-    image->bmih.bit_count    = le16toh(image->bmih.bit_count);
+    // bmp format is little endian
+    image->bmih.size            = le32toh(image->bmih.size);	        
+	image->bmih.width           = le32toh(image->bmih.width);          
+	image->bmih.height          = le32toh(image->bmih.height);	        
+	image->bmih.planes          = le16toh(image->bmih.planes);	        
+	image->bmih.bit_count       = le16toh(image->bmih.bit_count);      
+	image->bmih.compression     = le32toh(image->bmih.compression);    
+	image->bmih.size_image      = le32toh(image->bmih.size_image);     
+	image->bmih.xPelsPerMeter   = le32toh(image->bmih.xPelsPerMeter);  
+	image->bmih.yPelsPerMeter   = le32toh(image->bmih.yPelsPerMeter);  
+	image->bmih.clr_used        = le32toh(image->bmih.clr_used);       
+	image->bmih.clr_important   = le32toh(image->bmih.clr_important);
 
     // Something with color table
     assert(image->bmih.bit_count == 1);
@@ -52,18 +60,26 @@ int bmp_decode_image(FILE* input, struct bmp_image** _image) {
     return 0;
 }
 
-// FIXME: Write in file with correct endianness
 // See description in libbmp.h
 int bmp_encode_image(FILE* output, struct bmp_image* image) {
     uint32_t off_bits = image->bmfh.off_bits;
     
-    image->bmfh.off_bits     = htole32(image->bmfh.off_bits);
-    image->bmfh.size         = htole32(image->bmfh.size);
+    // bmp format is little endian
+    image->bmfh.size            = htole32(image->bmfh.size);
+    image->bmfh.off_bits        = htole32(image->bmfh.off_bits);
 
-    // FIXME: fix endianness for other fields
-    image->bmih.height       = htole32(image->bmih.height);
-    image->bmih.width        = htole32(image->bmih.width);
-    image->bmih.bit_count    = htole16(image->bmih.bit_count);
+    // bmp format is little endian
+    image->bmih.size            = htole32(image->bmih.size);	        
+	image->bmih.width           = htole32(image->bmih.width);          
+	image->bmih.height          = htole32(image->bmih.height);	        
+	image->bmih.planes          = htole16(image->bmih.planes);	        
+	image->bmih.bit_count       = htole16(image->bmih.bit_count);      
+	image->bmih.compression     = htole32(image->bmih.compression);    
+	image->bmih.size_image      = htole32(image->bmih.size_image);     
+	image->bmih.xPelsPerMeter   = htole32(image->bmih.xPelsPerMeter);  
+	image->bmih.yPelsPerMeter   = htole32(image->bmih.yPelsPerMeter);  
+	image->bmih.clr_used        = htole32(image->bmih.clr_used);       
+	image->bmih.clr_important   = htole32(image->bmih.clr_important);
 
     fwrite(&image->bmfh, sizeof(struct bmp_file_header), 1, output);
     fwrite(&image->bmih, sizeof(struct bmp_info_header), 1, output);
