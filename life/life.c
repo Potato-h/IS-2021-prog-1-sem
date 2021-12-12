@@ -34,21 +34,21 @@ int main(int argc, char* argv[]) {
         if (strcmp(argv[i], INPUT_ARG) == 0) {
             if (i + 1 == argc) {
                 fprintf(stderr, "Input file name wasn't provided\n");
-                goto CLEANUP;
+                goto ARG_PARSE_CLEANUP;
             }
 
             input = fopen(argv[i + 1], "rwb+");
 
             if (!input) {
                 fprintf(stderr, "Couldn't open input file: %s\n", argv[i + 1]);
-                goto CLEANUP;
+                goto ARG_PARSE_CLEANUP;
             }
         }
         
         if (strcmp(argv[i], OUTPUT_ARG) == 0) {
             if (i + 1 == argc) {
                 fprintf(stderr, "Argument output wasn't provided\n");
-                goto CLEANUP;
+                goto ARG_PARSE_CLEANUP;
             }
 
             output_dir = argv[i + 1];
@@ -58,24 +58,24 @@ int main(int argc, char* argv[]) {
         if (strcmp(argv[i], MAX_ITER_ARG) == 0) {
             if (i + 1 == argc) {
                 fprintf(stderr, "Argument max_iter wasn't provided\n");
-                goto CLEANUP;
+                goto ARG_PARSE_CLEANUP;
             }
 
             if ((max_iter = atoi(argv[i + 1])) == 0) {
                 fprintf(stderr, "Invalid max_iter argument: %s %s\n", argv[i], argv[i + 1]);
-                goto CLEANUP;
+                goto ARG_PARSE_CLEANUP;
             }
         }
 
         if (strcmp(argv[i], DUMP_FREQ_ARG) == 0) {
             if (i + 1 == argc) {
                 fprintf(stderr, "Argument dump_freq wasn't provded\n");
-                goto CLEANUP;
+                goto ARG_PARSE_CLEANUP;
             }
 
             if ((dump_freq = atoi(argv[i + 1])) == 0) {
                 fprintf(stderr, "Invalid dump_freq argument: %s %s\n", argv[i], argv[i + 1]);
-                goto CLEANUP;
+                goto ARG_PARSE_CLEANUP;
             }
         }
     }
@@ -97,20 +97,24 @@ int main(int argc, char* argv[]) {
         printf("Are you sure, that you want infite game? [y/n]\n");
 
         if (getchar() != 'y') {
-            goto CLEANUP;
+            goto ARG_PARSE_CLEANUP;
         }
     }
 
     struct life_game* game;
 
-    life_game_init(&config, &game);
-    bmp_free_image(&start);
+    if (life_game_init(&config, &game) != 0) {
+        fprintf(stderr, "Failed to init game\n");
+        goto GAME_CLEANUP;
+    }
 
     while (life_game_step(game) == 0);
 
+GAME_CLEANUP:
+    bmp_free_image(&start);
     life_free_game(&game);
 
-CLEANUP:
+ARG_PARSE_CLEANUP:
     if (input) {
         fclose(input);
     }

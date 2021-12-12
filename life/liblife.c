@@ -18,18 +18,19 @@
 
 #define INPLACE_LIMIT 100
 
-void life_game_init(struct life_config* config, struct life_game** game) {
+int life_game_init(struct life_config* config, struct life_game** game) {
     *game = malloc(sizeof(struct life_game));
     
-    // TODO: Just copy whole config
     (*game)->step = 0;
     (*game)->config = *config;
 
     if (config->start) {
         (*game)->state = bmp_copy_image(config->start);
     } else {
-        // TODO: random picture
+        return -1;
     }
+
+    return 0;
 }
 
 int life_game_step(struct life_game* game) {

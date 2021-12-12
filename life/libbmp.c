@@ -146,6 +146,10 @@ struct bmp_image* bmp_copy_image(struct bmp_image* image) {
 
 // See description in libbmp.h
 void bmp_free_image(struct bmp_image** image) {
+    if (image == NULL || *image == NULL) {
+        return;
+    }
+
     for (size_t i = 0; i < (*image)->bmih.height; i++) {
         free((*image)->bitmap[i]);
     }

@@ -4,7 +4,7 @@
 #include "libbmp.h"
 #include <stdint.h>
 
-// Config of life game. All fields are requaried
+// Config of life game. All fields are requaried.
 struct life_config {
     struct bmp_image*   start;
     char*               out_dir;
@@ -21,12 +21,14 @@ struct life_game {
 };
 
 // Initialization of game. Deap copy of config.
-void life_game_init(struct life_config* config, struct life_game** game);
+// Return 0 on success.
+int life_game_init(struct life_config* config, struct life_game** game);
 
-// One step of game. life_game_init call before first step is required
+// One step of game. life_game_init call before first step is required.
+// Return 0 on success
 int life_game_step(struct life_game* game);
 
-// Clean up of all resources
+// Clean up of all resources.
 void life_free_game(struct life_game** game);
 
 #endif
