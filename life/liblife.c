@@ -2,9 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// TODO: Rewrite all logs and erros
-// TODO: Hide logs in own library
-
 #define RESET   "\033[0m"
 #define BLACK   "\033[30m"      /* Black */
 #define RED     "\033[31m"      /* Red */
