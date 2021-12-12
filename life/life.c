@@ -104,6 +104,7 @@ int main(int argc, char* argv[]) {
     struct life_game* game;
 
     life_game_init(&config, &game);
+    bmp_free_image(&start);
 
     while (life_game_step(game) == 0);
 

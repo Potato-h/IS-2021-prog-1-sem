@@ -16,6 +16,8 @@
 #define log_warning(format, ...)    fprintf(stderr, YELLOW "%s(): " format ": %s:%d\n" RESET, __func__, ##__VA_ARGS__, __FILE__, __LINE__)
 #define log_error(format, ...)      fprintf(stderr, RED "%s(): " format ": %s:%d\n" RESET, __func__, ##__VA_ARGS__, __FILE__, __LINE__)
 
+#define INPLACE_LIMIT 100
+
 void life_game_init(struct life_config* config, struct life_game** game) {
     *game = malloc(sizeof(struct life_game));
     
@@ -31,7 +33,8 @@ void life_game_init(struct life_config* config, struct life_game** game) {
 }
 
 int life_game_step(struct life_game* game) {
-    if (game->config.max_iter != 0 && game->step == game->config.max_iter) {
+    if ((game->config.max_iter != 0 && game->step == game->config.max_iter)
+    || game->step == INPLACE_LIMIT) {
         log("All iteration done");
         return 1;
     }
@@ -71,7 +74,7 @@ int life_game_step(struct life_game* game) {
     }
 
     // Replace old state by new calculated
-    free(game->state);
+    bmp_free_image(&game->state);
     game->state = next;
 
     // Upload image of new state in output directory
@@ -103,6 +106,7 @@ int life_game_step(struct life_game* game) {
 }
 
 void life_free_game(struct life_game** game) {
+    bmp_free_image(&(*game)->state);
     free(*game);
     *game = NULL;
 }
