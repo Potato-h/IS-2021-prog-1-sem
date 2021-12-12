@@ -23,6 +23,7 @@ uint32_t bmp_pixels_to_bytes(uint32_t width) {
 int bmp_decode_image(FILE* input, struct bmp_image** _image) {
     *_image = malloc(sizeof(struct bmp_image));
     struct bmp_image* image = *_image;
+    // read headers
     fread(&image->bmfh, sizeof(struct bmp_file_header), 1, input);
     fread(&image->bmih, sizeof(struct bmp_info_header), 1, input);
 
@@ -43,7 +44,12 @@ int bmp_decode_image(FILE* input, struct bmp_image** _image) {
 	image->bmih.clr_used        = le32toh(image->bmih.clr_used);       
 	image->bmih.clr_important   = le32toh(image->bmih.clr_important);
 
-    // Something with color table
+    // read color table
+    image->colors = malloc(sizeof(struct bmp_rgbquad) * (1 << image->bmih.bit_count));
+    fread(image->colors, sizeof(struct bmp_rgbquad), 1 << image->bmih.bit_count, input);
+    
+    // TODO: add support for multi color image
+    // Suppose, that we have black/white image
     assert(image->bmih.bit_count == 1);
     
     uint16_t bytes_in_row = bmp_pixels_to_bytes(image->bmih.width);
@@ -81,18 +87,13 @@ int bmp_encode_image(FILE* output, struct bmp_image* image) {
 	image->bmih.clr_used        = htole32(image->bmih.clr_used);       
 	image->bmih.clr_important   = htole32(image->bmih.clr_important);
 
+    // write headers
     fwrite(&image->bmfh, sizeof(struct bmp_file_header), 1, output);
     fwrite(&image->bmih, sizeof(struct bmp_info_header), 1, output);
 
-    // Something with color table
-    // TODO: make normal color table output
-    char black[] = { 0, 0, 0, 0 };
-    char white[] = { 255, 255, 255, 0 };
+    // write color table
+    fwrite(image->colors, sizeof(struct bmp_rgbquad), 1 << image->bmih.bit_count, output);
 
-    fwrite(black, sizeof(black), 1, output);
-    fwrite(white, sizeof(white), 1, output);
-
-    // skip color table
     fseek(output, off_bits, SEEK_SET);
 
     uint32_t bytes_in_row = bmp_pixels_to_bytes(image->bmih.width);
@@ -124,9 +125,13 @@ void bmp_set_pixel(struct bmp_image* image, uint32_t row, uint32_t column, uint3
 struct bmp_image* bmp_copy_image(struct bmp_image* image) {
     struct bmp_image* copy = malloc(sizeof(struct bmp_image));
 
+    // copy headers
     memcpy(&copy->bmfh, &image->bmfh, sizeof(image->bmfh));
     memcpy(&copy->bmih, &image->bmih, sizeof(image->bmih));
+    
     // copy color table
+    copy->colors = malloc(sizeof(struct bmp_rgbquad) * (1 << image->bmih.bit_count));
+    memcpy(copy->colors, image->colors, sizeof(struct bmp_rgbquad) * (1 << image->bmih.bit_count));
 
     uint32_t bytes_in_row = bmp_pixels_to_bytes(image->bmih.width);
     copy->bitmap = malloc(sizeof(uint8_t*) * image->bmih.height);
@@ -145,6 +150,7 @@ void bmp_free_image(struct bmp_image** image) {
         free((*image)->bitmap[i]);
     }
 
+    free((*image)->colors);
     free((*image)->bitmap);
     free(*image);
     *image = NULL;

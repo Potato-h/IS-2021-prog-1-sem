@@ -36,7 +36,7 @@ struct bmp_rgbquad {
     uint8_t green;      // Green part of the color
     uint8_t red;        // Red part of the color
     uint8_t reserved;   // Must always be set to zero
-};
+} __attribute__((packed));
 
 struct bmp_image {
     struct bmp_file_header  bmfh;
