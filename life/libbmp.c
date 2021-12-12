@@ -5,6 +5,8 @@
 
 // TODO: rewrite all logs and erros
 // TODO: make solution independent in terms of endianness
+// TODO: all magic constants MUST BE erased
+// TODO: see gtol/ltoh functions
 
 uint16_t le16_to_cpu(uint8_t* x) {
     return (uint16_t)x[0]
@@ -28,7 +30,15 @@ uint32_t cpu_to_le32(uint32_t x) {
     return *(uint32_t*)buf;
 }
 
-// FIXME: Invalid read because of pixel bit count 
+uint32_t bmp_pixels_to_bytes(uint32_t width) {
+    // width is provided in pixel and we assume, that image is 1-bit colored
+    uint32_t bytes_in_row = (sizeof(uint8_t) * width + 7) / 8;
+    // bmp format want to have number of bytes in a row reaches a multiple of four
+    bytes_in_row += (4 - (bytes_in_row % 4)) % 4;
+
+    return bytes_in_row;
+}
+
 // See description in libbmp.h
 int bmp_decode_image(FILE* input, struct bmp_image** _image) {
     *_image = malloc(sizeof(struct bmp_image));
@@ -44,24 +54,18 @@ int bmp_decode_image(FILE* input, struct bmp_image** _image) {
     image->bmih.width        = le32_to_cpu((uint8_t*)&image->bmih.width); 
     image->bmih.bit_count    = le16_to_cpu((uint8_t*)&image->bmih.bit_count);
 
-    uint32_t height = image->bmih.height;
-    uint32_t width = image->bmih.width;
-
     // Something with color table
     assert(image->bmih.bit_count == 1);
     
-    // width is provided in pixel and we assume, that image is 1-bit colored
-    uint32_t width_bytes = (sizeof(uint8_t) * width + 7) / 8;
-    // bmp format want to have number of bytes in a row reaches a multiple of four
-    width_bytes += (4 - (width_bytes % 4)) % 4;
-    image->bitmap = malloc(sizeof(uint8_t*) * height);
+    uint16_t bytes_in_row = bmp_pixels_to_bytes(image->bmih.width);
+    image->bitmap = malloc(sizeof(uint8_t*) * image->bmih.height);
 
     // Forget anything else and seek to actual data
     fseek(input, image->bmfh.off_bits, SEEK_SET);
 
-    for (size_t i = 0; i < height; i++) {
-        image->bitmap[i] = malloc(sizeof(uint8_t) * width_bytes);
-        fread(image->bitmap[i], sizeof(uint8_t), width_bytes, input);
+    for (size_t i = 0; i < image->bmih.height; i++) {
+        image->bitmap[i] = malloc(sizeof(uint8_t) * bytes_in_row);
+        fread(image->bitmap[i], sizeof(uint8_t), bytes_in_row, input);
     }
 
     return 0;
@@ -93,35 +97,32 @@ int bmp_encode_image(FILE* output, struct bmp_image* image) {
     fwrite(black, sizeof(black), 1, output);
     fwrite(white, sizeof(white), 1, output);
 
-    uint32_t height = image->bmih.height;
-    uint32_t width = image->bmih.width;
-    
-    uint32_t width_bytes = (sizeof(uint8_t) * width + 7) / 8;
-    // bmp format want to have number of bytes in a row reaches a multiple of four
-    width_bytes += (4 - (width_bytes % 4)) % 4;
-
     // skip color table
     fseek(output, off_bits, SEEK_SET);
 
-    for (size_t i = 0; i < height; i++) {
-        fwrite(image->bitmap[i], sizeof(uint8_t), width_bytes, output);
+    uint32_t bytes_in_row = bmp_pixels_to_bytes(image->bmih.width);
+
+    for (size_t i = 0; i < image->bmih.height; i++) {
+        fwrite(image->bitmap[i], sizeof(uint8_t), bytes_in_row, output);
     }
 
     return 0;
 }
 
+// FIXME: very terrifing expression
 // FIXME: function hardcoded to work with 1-bit pixel
 // See description in libbmp.h
-uint8_t bmp_get_pixel(struct bmp_image* image, uint32_t row, uint32_t column) {
+uint32_t bmp_get_pixel(struct bmp_image* image, uint32_t row, uint32_t column) {
     uint8_t byte = image->bitmap[image->bmih.height - row - 1][column / 8];
     return (byte >> ((7 - (column % 8)) % 8)) & 1;
 }
 
+// FIXME: very terrifing expression
 // FIXME: function hardcoded to work with 1-bit pixel
 // See description in libbmp.h
-void bmp_set_pixel(struct bmp_image* image, uint32_t row, uint32_t column, uint8_t pixel) {
+void bmp_set_pixel(struct bmp_image* image, uint32_t row, uint32_t column, uint32_t color) {
     uint8_t* byte = &image->bitmap[image->bmih.height - row - 1][column / 8];
-    *byte ^= (-pixel ^ *byte) & (1 << ((7 - (column % 8)) % 8));
+    *byte ^= (-color ^ *byte) & (1 << ((7 - (column % 8)) % 8));
 }
 
 // See description in libbmp.h
@@ -132,18 +133,12 @@ struct bmp_image* bmp_copy_image(struct bmp_image* image) {
     memcpy(&copy->bmih, &image->bmih, sizeof(image->bmih));
     // copy color table
 
-    uint32_t height = image->bmih.height;
-    uint32_t width = image->bmih.width;
+    uint32_t bytes_in_row = bmp_pixels_to_bytes(image->bmih.width);
+    copy->bitmap = malloc(sizeof(uint8_t*) * image->bmih.height);
 
-    // width is provided in pixel and we assume, that image is 1-bit
-    uint32_t width_bytes = (sizeof(uint8_t) * width + 7) / 8;
-    // bmp format want to have number of bytes in a row reaches a multiple of four
-    width_bytes += (4 - (width_bytes % 4)) % 4;
-    copy->bitmap = malloc(sizeof(uint8_t*) * height);
-
-    for (size_t i = 0; i < height; i++) {
-        copy->bitmap[i] = malloc(sizeof(uint8_t) * width_bytes);
-        memcpy(copy->bitmap[i], image->bitmap[i], sizeof(uint8_t) * width_bytes);
+    for (size_t i = 0; i < image->bmih.height; i++) {
+        copy->bitmap[i] = malloc(sizeof(uint8_t) * bytes_in_row);
+        memcpy(copy->bitmap[i], image->bitmap[i], sizeof(uint8_t) * bytes_in_row);
     }
 
     return copy;

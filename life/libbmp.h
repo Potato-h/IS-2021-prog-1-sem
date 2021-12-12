@@ -52,10 +52,10 @@ int bmp_decode_image(FILE* input, struct bmp_image** image);
 int bmp_encode_image(FILE* output, struct bmp_image* image);
 
 // Get byte of bitmap in given position. Doesn't check range.
-uint8_t bmp_get_pixel(struct bmp_image* image, uint32_t line, uint32_t column);
+uint32_t bmp_get_pixel(struct bmp_image* image, uint32_t line, uint32_t column);
 
 // Set byte of bitmap in given position. Doesn't check range.
-void bmp_set_pixel(struct bmp_image* image, uint32_t row, uint32_t column, uint8_t pixel);
+void bmp_set_pixel(struct bmp_image* image, uint32_t row, uint32_t column, uint32_t color);
 
 // Copy given image and allocate memory for it. So, bmp_free_image
 // call at the end is needed.
