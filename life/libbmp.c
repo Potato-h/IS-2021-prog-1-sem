@@ -3,32 +3,13 @@
 #include <string.h>
 #include <assert.h>
 
+#define _BSD_SOURCE
+#define __USE_BSD
+#include <endian.h>
+
 // TODO: rewrite all logs and erros
 // TODO: make solution independent in terms of endianness
 // TODO: all magic constants MUST BE erased
-// TODO: see gtol/ltoh functions
-
-uint16_t le16_to_cpu(uint8_t* x) {
-    return (uint16_t)x[0]
-    | ((uint16_t)x[1] << 8);
-}
-
-uint32_t le32_to_cpu(uint8_t* x) {
-    return (uint32_t)x[0] 
-    | ((uint32_t)x[1] << 8) 
-    | ((uint32_t)x[2] << 16) 
-    | ((uint32_t)x[3] << 24);
-}
-
-uint16_t cpu_to_le16(uint16_t x) {
-    uint8_t buf[] = { x & 0xFF, (x >> 8) & 0xFF };
-    return *(uint16_t*)buf;
-}
-
-uint32_t cpu_to_le32(uint32_t x) {
-    uint8_t buf[] = { x & 0xFF, (x >> 8) & 0xFF, (x >> 16) & 0xFF, (x >> 24) & 0xFF };
-    return *(uint32_t*)buf;
-}
 
 uint32_t bmp_pixels_to_bytes(uint32_t width) {
     // width is provided in pixel and we assume, that image is 1-bit colored
@@ -46,13 +27,13 @@ int bmp_decode_image(FILE* input, struct bmp_image** _image) {
     fread(&image->bmfh, sizeof(struct bmp_file_header), 1, input);
     fread(&image->bmih, sizeof(struct bmp_info_header), 1, input);
 
-    image->bmfh.off_bits     = le32_to_cpu((uint8_t*)&image->bmfh.off_bits);
-    image->bmfh.size         = le32_to_cpu((uint8_t*)&image->bmfh.size);
+    image->bmfh.off_bits     = le32toh(image->bmfh.off_bits);
+    image->bmfh.size         = le32toh(image->bmfh.size);
 
     // FIXME: fix endianness for other fields
-    image->bmih.height       = le32_to_cpu((uint8_t*)&image->bmih.height);
-    image->bmih.width        = le32_to_cpu((uint8_t*)&image->bmih.width); 
-    image->bmih.bit_count    = le16_to_cpu((uint8_t*)&image->bmih.bit_count);
+    image->bmih.height       = le32toh(image->bmih.height);
+    image->bmih.width        = le32toh(image->bmih.width);
+    image->bmih.bit_count    = le16toh(image->bmih.bit_count);
 
     // Something with color table
     assert(image->bmih.bit_count == 1);
@@ -71,20 +52,18 @@ int bmp_decode_image(FILE* input, struct bmp_image** _image) {
     return 0;
 }
 
-// FIXME: Write trash on simple read/write without changes
 // FIXME: Write in file with correct endianness
-// FIXME: Invalid read because of pixel bit count 
 // See description in libbmp.h
 int bmp_encode_image(FILE* output, struct bmp_image* image) {
     uint32_t off_bits = image->bmfh.off_bits;
     
-    image->bmfh.off_bits     = cpu_to_le32(image->bmfh.off_bits);
-    image->bmfh.size         = cpu_to_le32(image->bmfh.size);
+    image->bmfh.off_bits     = htole32(image->bmfh.off_bits);
+    image->bmfh.size         = htole32(image->bmfh.size);
 
     // FIXME: fix endianness for other fields
-    image->bmih.height       = cpu_to_le32(image->bmih.height);
-    image->bmih.width        = cpu_to_le32(image->bmih.width); 
-    image->bmih.bit_count    = cpu_to_le16(image->bmih.bit_count);
+    image->bmih.height       = htole32(image->bmih.height);
+    image->bmih.width        = htole32(image->bmih.width);
+    image->bmih.bit_count    = htole16(image->bmih.bit_count);
 
     fwrite(&image->bmfh, sizeof(struct bmp_file_header), 1, output);
     fwrite(&image->bmih, sizeof(struct bmp_info_header), 1, output);

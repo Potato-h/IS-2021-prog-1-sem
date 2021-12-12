@@ -51,8 +51,8 @@ int life_game_step(struct life_game* game) {
             for (int32_t di = -1; di <= 1; di++) {
                 for (int32_t dj = -1; dj <= 1; dj++) {
                     if ((di != 0 || dj != 0) 
-                    && 0 <= i + di && i + di < next->bmih.height
-                    && 0 <= j + dj && j + dj < next->bmih.width
+                    && 0 <= (int32_t)i + di && i + di < next->bmih.height
+                    && 0 <= (int32_t)j + dj && j + dj < next->bmih.width
                     ) {
                         neibo += bmp_get_pixel(game->state, i + di, j + dj) == 0;
                     } 
