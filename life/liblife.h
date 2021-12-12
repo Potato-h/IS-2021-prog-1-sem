@@ -20,7 +20,7 @@ struct life_game {
     struct life_config  config;  
 };
 
-// Initialization of game.
+// Initialization of game. Deap copy of config.
 void life_game_init(struct life_config* config, struct life_game** game);
 
 // One step of game. life_game_init call before first step is required
