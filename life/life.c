@@ -6,6 +6,7 @@
 #include "libbmp.h"
 #include "liblife.h"
 
+#define HELP_ARG            "--help"
 #define INPUT_ARG           "--input"
 #define OUTPUT_ARG          "--output"
 #define MAX_ITER_ARG        "--max_iter"
@@ -23,6 +24,13 @@
 #include <sys/types.h>
 #endif
 
+static char* help = 
+    "Usage: %s --input <filepath> --output <dirpath>\n"
+    "Optinal arguments:\n"
+    "   --help              print this help and quit\n"
+    "   --max_iter <N>      run with no more, that <N> steps\n"
+    "   --dump_freq <N>     save only steps that are multiple of <N>\n";
+
 // There is some problem with label mark
 int main(int argc, char* argv[]) {
     FILE*       input       = NULL;
@@ -30,7 +38,12 @@ int main(int argc, char* argv[]) {
     uint32_t    max_iter    = 0;    // 0 represent inf value
     uint32_t    dump_freq   = 1;
 
-    for (int i = 0; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], HELP_ARG) == 0) {
+            printf(help, argv[0]);
+            goto ARG_PARSE_CLEANUP;
+        }
+        
         if (strcmp(argv[i], INPUT_ARG) == 0) {
             if (i + 1 == argc) {
                 fprintf(stderr, "Input file name wasn't provided\n");
