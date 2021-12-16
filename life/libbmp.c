@@ -67,6 +67,7 @@ int bmp_decode_image(FILE* input, struct bmp_image** _image) {
     return 0;
 }
 
+// FIXME: mess up endianess after encode
 // See description in libbmp.h
 int bmp_encode_image(FILE* output, struct bmp_image* image) {
     uint32_t off_bits = image->bmfh.off_bits;
