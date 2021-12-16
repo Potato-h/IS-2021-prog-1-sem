@@ -92,7 +92,7 @@ int life_game_step(struct life_game* game) {
         strcpy(filepath, game->config.out_dir);
         strcat(filepath, filename);
 
-        if (!(file = fopen(filepath, "wb+"))) {
+        if (!(file = fopen(filepath, "wb"))) {
             log_error("Couldn't open to file\n");
             return -1;
         }
