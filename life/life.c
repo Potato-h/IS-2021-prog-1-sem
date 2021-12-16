@@ -56,6 +56,9 @@ int main(int argc, char* argv[]) {
                 fprintf(stderr, "Couldn't open input file: %s\n", argv[i + 1]);
                 goto ARG_PARSE_CLEANUP;
             }
+
+            i++;
+            continue;
         }
         
         if (strcmp(argv[i], OUTPUT_ARG) == 0) {
@@ -66,6 +69,9 @@ int main(int argc, char* argv[]) {
 
             output_dir = argv[i + 1];
             mkdir(output_dir, 0700);
+
+            i++;
+            continue;
         }
 
         if (strcmp(argv[i], MAX_ITER_ARG) == 0) {
@@ -78,6 +84,9 @@ int main(int argc, char* argv[]) {
                 fprintf(stderr, "Invalid max_iter argument: %s %s\n", argv[i], argv[i + 1]);
                 goto ARG_PARSE_CLEANUP;
             }
+
+            i++;
+            continue;
         }
 
         if (strcmp(argv[i], DUMP_FREQ_ARG) == 0) {
@@ -90,7 +99,13 @@ int main(int argc, char* argv[]) {
                 fprintf(stderr, "Invalid dump_freq argument: %s %s\n", argv[i], argv[i + 1]);
                 goto ARG_PARSE_CLEANUP;
             }
+
+            i++;
+            continue;
         }
+
+        fprintf(stderr, "Unknown argument: %s\n", argv[i]);
+        goto ARG_PARSE_CLEANUP;
     }
 
     struct bmp_image* start = NULL;
