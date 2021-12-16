@@ -18,6 +18,9 @@
 
 #define INPLACE_LIMIT 100
 
+// TODO: Hash previous steps and stop game, when previous 
+// state was reached or all cells died
+
 int life_game_init(struct life_config* config, struct life_game** game) {
     *game = malloc(sizeof(struct life_game));
     

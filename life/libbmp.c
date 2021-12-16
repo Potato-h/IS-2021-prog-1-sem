@@ -7,6 +7,7 @@
 #define __USE_BSD
 #include <endian.h>
 
+// TODO: Add hasher
 // TODO: rewrite all logs and erros
 // TODO: all magic constants MUST BE erased
 
