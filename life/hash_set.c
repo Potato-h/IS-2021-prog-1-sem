@@ -1,5 +1,6 @@
 #include "hash_set.h"
 #include <stdlib.h>
+#include <string.h>
 
 static int list_exists(struct list* head, uint64_t key) {
     while (head) {
@@ -54,6 +55,12 @@ static void list_free(struct list** head) {
 static uint32_t hs_bucket(uint64_t key) {
     return (138 * key + 827138) % HS_TABLE_SIZE;
 }
+
+void hs_create(struct hash_set* set) {
+    memset(set->table, 0, sizeof(struct list*) * HS_TABLE_SIZE);
+    return;
+}
+
 
 int hs_exists(struct hash_set* set, uint64_t key) {
     return list_exists(set->table[hs_bucket(key)], key);

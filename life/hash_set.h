@@ -24,6 +24,9 @@ struct hash_set {
 
 static uint32_t hs_bucket(uint64_t key);
 
+// Init empty set
+void hs_create(struct hash_set* set);
+
 // Return 1 if key exists and 0 otherwise.
 int hs_exists(struct hash_set* set, uint64_t key);
 
