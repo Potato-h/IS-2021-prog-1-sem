@@ -10,19 +10,9 @@ struct list {
     struct list* next;
 };
 
-static int list_exists(struct list* head, uint64_t key);
-
-static void list_insert(struct list** head, uint64_t key);
-
-static void list_erase(struct list** head, uint64_t key);
-
-static void list_free(struct list** head);
-
 struct hash_set {
     struct list* table[HS_TABLE_SIZE];  
 };
-
-static uint32_t hs_bucket(uint64_t key);
 
 // Init empty set
 void hs_create(struct hash_set* set);
