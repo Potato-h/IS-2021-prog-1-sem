@@ -16,7 +16,7 @@
 #define log_warning(format, ...)    fprintf(stderr, YELLOW "%s(): " format ": %s:%d\n" RESET, __func__, ##__VA_ARGS__, __FILE__, __LINE__)
 #define log_error(format, ...)      fprintf(stderr, RED "%s(): " format ": %s:%d\n" RESET, __func__, ##__VA_ARGS__, __FILE__, __LINE__)
 
-#define INPLACE_LIMIT 100
+#define INPLACE_LIMIT 10000
 
 // TODO: Hash previous steps and stop game, when previous 
 // state was reached or all cells died
