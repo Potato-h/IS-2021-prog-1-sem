@@ -147,6 +147,24 @@ struct bmp_image* bmp_copy_image(struct bmp_image* image) {
     return copy;
 }
 
+uint64_t bmp_calc_hash(struct bmp_image* image) {
+    uint64_t hash = 0;
+    const uint64_t p = 837;
+    const uint64_t mod = (uint64_t)31209381023891239;
+    uint64_t p_pow = 1;
+
+    for (size_t i = 0; i < image->bmih.height; i++) {
+        for (size_t j = 0; j < image->bmih.width; j++) {
+            hash += p_pow * bmp_get_pixel(image, i, j);
+            hash %= mod;
+            p_pow *= p;
+            p_pow %= mod;
+        }
+    }
+
+    return hash;
+}
+
 // See description in libbmp.h
 void bmp_free_image(struct bmp_image** image) {
     if (image == NULL || *image == NULL) {
