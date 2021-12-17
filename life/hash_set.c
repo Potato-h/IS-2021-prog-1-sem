@@ -16,8 +16,8 @@ static int list_exists(struct list* head, uint64_t key) {
 static void list_insert(struct list** head, uint64_t key) {
     struct list* node = malloc(sizeof(struct list));
     node->key = key;
-    node->next = (*head);
-    (*head)->next = node;
+    node->next = *head;
+    *head = node;
 }
 
 static void list_erase(struct list** head, uint64_t key) {
