@@ -76,6 +76,6 @@ void hs_erase(struct hash_set* set, uint64_t key) {
 
 void hs_free(struct hash_set* set) {
     for (size_t i = 0; i < HS_TABLE_SIZE; i++) {
-        list_free(&set[i]);
+        list_free(&set->table[i]);
     }
 }
