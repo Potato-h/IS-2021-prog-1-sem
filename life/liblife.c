@@ -22,17 +22,16 @@
 // state was reached or all cells died
 
 int life_game_init(struct life_config* config, struct life_game** game) {
-    *game = malloc(sizeof(struct life_game));
-    
-    (*game)->step = 0;
-    (*game)->config = *config;
-
-    if (config->start) {
-        (*game)->state = bmp_copy_image(config->start);
-    } else {
+    if (config->start == NULL) {
+        log_error("Condig without start position was provided");
         return -1;
     }
 
+    *game = malloc(sizeof(struct life_game));
+    (*game)->step = 0;
+    (*game)->config = *config;
+    (*game)->state = bmp_copy_image(config->start);
+    
     return 0;
 }
 
@@ -110,6 +109,9 @@ int life_game_step(struct life_game* game) {
 }
 
 void life_free_game(struct life_game** game) {
+    if (game == NULL || *game == NULL)
+        return;
+
     bmp_free_image(&(*game)->state);
     free(*game);
     *game = NULL;
