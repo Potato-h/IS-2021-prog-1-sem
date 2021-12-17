@@ -2,6 +2,7 @@
 #define LIBLIFE_HEADER
 
 #include "libbmp.h"
+#include "hash_set.h"
 #include <stdint.h>
 
 // Config of life game. All fields are requaried.
@@ -18,6 +19,7 @@ struct life_game {
     uint32_t            step;
     struct bmp_image*   state;
     struct life_config  config;  
+    struct hash_set     state_set;
 };
 
 // Initialization of game. Deap copy of config.

@@ -31,7 +31,9 @@ int life_game_init(struct life_config* config, struct life_game** game) {
     (*game)->step = 0;
     (*game)->config = *config;
     (*game)->state = bmp_copy_image(config->start);
-    
+    hs_create(&(*game)->state_set);
+    hs_insert(&(*game)->state_set, bmp_calc_hash((*game)->state));
+
     return 0;
 }
 
@@ -44,12 +46,14 @@ int life_game_step(struct life_game* game) {
 
     game->step++;
     
+    uint32_t has_alive = 0;
     struct bmp_image* next = bmp_copy_image(game->state);
 
     for (size_t i = 0; i < next->bmih.height; i++) {
         for (size_t j = 0; j < next->bmih.width; j++) {
             uint8_t neibo = 0; 
             uint8_t alive = bmp_get_pixel(game->state, i, j) == 0;
+            has_alive += alive;
 
             for (int32_t di = -1; di <= 1; di++) {
                 for (int32_t dj = -1; dj <= 1; dj++) {
@@ -79,6 +83,20 @@ int life_game_step(struct life_game* game) {
     // Replace old state by new calculated
     bmp_free_image(&game->state);
     game->state = next;
+
+    if (has_alive == 0) {
+        log("All cells died");
+        return 1;
+    }
+
+    uint64_t hash = bmp_calc_hash(game->state);
+
+    if (hs_exists(&game->state_set, hash)) {
+        log("Meet state, that already was handled");
+        return 1;
+    }
+
+    hs_insert(&game->state_set, hash);
 
     // Upload image of new state in output directory
     if (game->step % game->config.dump_freq == 0) {
@@ -113,6 +131,7 @@ void life_free_game(struct life_game** game) {
         return;
 
     bmp_free_image(&(*game)->state);
+    hs_free(&(*game)->state_set);
     free(*game);
     *game = NULL;
 }
