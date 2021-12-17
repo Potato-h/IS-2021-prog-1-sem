@@ -8,5 +8,8 @@ test: clean build
 	--output out \
 	--max_iter 10000
 
+convert: 
+	convert $(IMAGE) -depth 1 -type bilevel BMP3:$(IMAGE).bmp
+
 clean:
 	rm -rf life out
