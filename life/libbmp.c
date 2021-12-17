@@ -69,8 +69,6 @@ int bmp_decode_image(FILE* input, struct bmp_image** _image) {
 
 // See description in libbmp.h
 int bmp_encode_image(FILE* output, struct bmp_image* image) {
-    uint32_t off_bits = image->bmfh.off_bits;
-    
     // bmp format is little endian
     struct bmp_file_header bmfh = image->bmfh;
     bmfh.size                   = htole32(image->bmfh.size);
