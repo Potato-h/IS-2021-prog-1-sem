@@ -67,36 +67,37 @@ int bmp_decode_image(FILE* input, struct bmp_image** _image) {
     return 0;
 }
 
-// FIXME: mess up endianess after encode
 // See description in libbmp.h
 int bmp_encode_image(FILE* output, struct bmp_image* image) {
     uint32_t off_bits = image->bmfh.off_bits;
     
     // bmp format is little endian
-    image->bmfh.size            = htole32(image->bmfh.size);
-    image->bmfh.off_bits        = htole32(image->bmfh.off_bits);
+    struct bmp_file_header bmfh = image->bmfh;
+    bmfh.size                   = htole32(image->bmfh.size);
+    bmfh.off_bits               = htole32(image->bmfh.off_bits);
 
     // bmp format is little endian
-    image->bmih.size            = htole32(image->bmih.size);	        
-	image->bmih.width           = htole32(image->bmih.width);          
-	image->bmih.height          = htole32(image->bmih.height);	        
-	image->bmih.planes          = htole16(image->bmih.planes);	        
-	image->bmih.bit_count       = htole16(image->bmih.bit_count);      
-	image->bmih.compression     = htole32(image->bmih.compression);    
-	image->bmih.size_image      = htole32(image->bmih.size_image);     
-	image->bmih.xPelsPerMeter   = htole32(image->bmih.xPelsPerMeter);  
-	image->bmih.yPelsPerMeter   = htole32(image->bmih.yPelsPerMeter);  
-	image->bmih.clr_used        = htole32(image->bmih.clr_used);       
-	image->bmih.clr_important   = htole32(image->bmih.clr_important);
+    struct bmp_info_header bmih = image->bmih;
+    bmih.size                   = htole32(image->bmih.size);	        
+	bmih.width                  = htole32(image->bmih.width);          
+	bmih.height                 = htole32(image->bmih.height);	        
+	bmih.planes                 = htole16(image->bmih.planes);	        
+	bmih.bit_count              = htole16(image->bmih.bit_count);      
+	bmih.compression            = htole32(image->bmih.compression);    
+	bmih.size_image             = htole32(image->bmih.size_image);     
+	bmih.xPelsPerMeter          = htole32(image->bmih.xPelsPerMeter);  
+	bmih.yPelsPerMeter          = htole32(image->bmih.yPelsPerMeter);  
+	bmih.clr_used               = htole32(image->bmih.clr_used);       
+	bmih.clr_important          = htole32(image->bmih.clr_important);
 
     // write headers
-    fwrite(&image->bmfh, sizeof(struct bmp_file_header), 1, output);
-    fwrite(&image->bmih, sizeof(struct bmp_info_header), 1, output);
+    fwrite(&bmfh, sizeof(struct bmp_file_header), 1, output);
+    fwrite(&bmih, sizeof(struct bmp_info_header), 1, output);
 
     // write color table
     fwrite(image->colors, sizeof(struct bmp_rgbquad), 1 << image->bmih.bit_count, output);
 
-    fseek(output, off_bits, SEEK_SET);
+    fseek(output, image->bmfh.off_bits, SEEK_SET);
 
     uint32_t bytes_in_row = bmp_pixels_to_bytes(image->bmih.width);
 
