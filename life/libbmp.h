@@ -61,6 +61,9 @@ void bmp_set_pixel(struct bmp_image* image, uint32_t row, uint32_t column, uint3
 // call at the end is needed.
 struct bmp_image* bmp_copy_image(struct bmp_image* image);
 
+// Calculate hash of given image
+uint64_t bmp_calc_hash(struct bmp_image* image);
+
 // Free all memory allocated from decode function. Set image to NULL on success.
 void bmp_free_image(struct bmp_image** image);
 
