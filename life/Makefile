@@ -1,7 +1,7 @@
 build:
 	gcc -Wall -Wextra \
-	life.c -o life \
-	libbmp.c liblife.c hash_set.c
+	src/life.c -o life \
+	lib/libbmp.c lib/liblife.c lib/hash_set.c
 
 test: clean build
 	./life --input start.bmp \

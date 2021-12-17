@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "libbmp.h"
-#include "liblife.h"
+#include "../include/libbmp.h"
+#include "../include/liblife.h"
 
 #define HELP_ARG            "--help"
 #define INPUT_ARG           "--input"

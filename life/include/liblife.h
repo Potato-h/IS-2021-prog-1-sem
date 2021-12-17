@@ -1,8 +1,8 @@
 #ifndef LIBLIFE_HEADER
 #define LIBLIFE_HEADER
 
-#include "libbmp.h"
-#include "hash_set.h"
+#include "../include/libbmp.h"
+#include "../include/hash_set.h"
 #include <stdint.h>
 
 // Config of life game. All fields are requaried.

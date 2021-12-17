@@ -1,4 +1,4 @@
-#include "libbmp.h"
+#include "../include/libbmp.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>

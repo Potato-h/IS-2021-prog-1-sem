@@ -1,4 +1,4 @@
-#include "liblife.h"
+#include "../include/liblife.h"
 #include <stdlib.h>
 #include <string.h>
 
